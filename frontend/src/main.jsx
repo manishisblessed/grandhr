@@ -22,6 +22,8 @@ import Employees from './components/Employees';
 import Leaves from './components/Leaves';
 import Attendance from './components/Attendance';
 import Payroll from './components/Payroll';
+import Automation from './components/Automation';
+import Support from './components/Support';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -61,6 +63,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="/hr/leaves" element={<Leaves />} />
             <Route path="/hr/attendance" element={<Attendance />} />
             <Route path="/hr/payroll" element={<Payroll />} />
+            <Route path="/hr/automation" element={<Automation />} />
+            <Route path="/hr/support" element={<Support />} />
           </Route>
         </Routes>
       </BrowserRouter>

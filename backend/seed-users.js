@@ -16,10 +16,10 @@ async function seedUsers() {
     // Admin User
     console.log('Creating Admin user...');
     const adminUser = await prisma.user.upsert({
-      where: { email: 'admin@squadhr.com' },
+      where: { email: 'admin@grandhr.com' },
       update: {},
       create: {
-        email: 'admin@squadhr.com',
+        email: 'admin@grandhr.com',
         password: adminPassword,
         role: 'ADMIN',
         employee: {
@@ -42,10 +42,10 @@ async function seedUsers() {
     // HR Manager User
     console.log('\nCreating HR Manager user...');
     const hrUser = await prisma.user.upsert({
-      where: { email: 'hr@squadhr.com' },
+      where: { email: 'hr@grandhr.com' },
       update: {},
       create: {
-        email: 'hr@squadhr.com',
+        email: 'hr@grandhr.com',
         password: hrPassword,
         role: 'HR',
         employee: {
@@ -68,10 +68,10 @@ async function seedUsers() {
     // Employee User
     console.log('\nCreating Employee user...');
     const empUser = await prisma.user.upsert({
-      where: { email: 'employee@squadhr.com' },
+      where: { email: 'employee@grandhr.com' },
       update: {},
       create: {
-        email: 'employee@squadhr.com',
+        email: 'employee@grandhr.com',
         password: empPassword,
         role: 'EMPLOYEE',
         employee: {
@@ -95,17 +95,17 @@ async function seedUsers() {
     console.log('📋 Test Users Created:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('👤 Admin');
-    console.log('   Email: admin@squadhr.com');
+    console.log('   Email: admin@grandhr.com');
     console.log('   Password: admin12345');
     console.log('   Role: ADMIN');
     console.log('');
     console.log('👤 HR Manager');
-    console.log('   Email: hr@squadhr.com');
+    console.log('   Email: hr@grandhr.com');
     console.log('   Password: hr12345');
     console.log('   Role: HR');
     console.log('');
     console.log('👤 Employee');
-    console.log('   Email: employee@squadhr.com');
+    console.log('   Email: employee@grandhr.com');
     console.log('   Password: emp12345');
     console.log('   Role: EMPLOYEE');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');

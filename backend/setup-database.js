@@ -11,14 +11,14 @@ function question(query) {
 }
 
 async function setupDatabase() {
-  console.log('\n=== SquadHR Database Setup ===\n');
+  console.log('\n=== GrandHR Database Setup ===\n');
   console.log('Please provide your PostgreSQL connection details:\n');
 
   const host = await question('PostgreSQL Host (default: localhost): ') || 'localhost';
   const port = await question('PostgreSQL Port (default: 5432): ') || '5432';
   const user = await question('PostgreSQL Username (default: postgres): ') || 'postgres';
   const password = await question('PostgreSQL Password: ');
-  const database = await question('Database Name (default: squadhr): ') || 'squadhr';
+  const database = await question('Database Name (default: grandhr): ') || 'grandhr';
 
   if (!password) {
     console.log('\n❌ Password is required!');
@@ -82,7 +82,7 @@ async function setupDatabase() {
     const envPath = path.join(__dirname, '.env');
     
     let envContent = `DATABASE_URL="${databaseUrl}"
-JWT_SECRET="squadhr-super-secret-jwt-key-change-in-production-${Date.now()}"
+JWT_SECRET="grandhr-super-secret-jwt-key-change-in-production-${Date.now()}"
 JWT_EXPIRES_IN="7d"
 PORT=5000
 NODE_ENV=development

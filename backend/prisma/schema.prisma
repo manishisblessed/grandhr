@@ -44,19 +44,29 @@ enum AttendanceStatus {
 
 model User {
   id        String   @id @default(uuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   email     String   @unique
   password  String
   role      UserRole @default(EMPLOYEE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   employee  Employee?
+  tickets   SupportTicket[]
+  ticketReplies TicketReply[]
+  auditLogs AuditLog[]
+  notificationPreference NotificationPreference?
+  
+  @@index([companyId])
 }
 
 model Employee {
   id            String   @id @default(uuid())
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   userId        String   @unique
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  employeeId    String   @unique
+  employeeId    String
   firstName     String
   lastName      String
   phone         String?
@@ -74,6 +84,7 @@ model Employee {
   manager       Employee? @relation("ManagerEmployee", fields: [managerId], references: [id])
   subordinates  Employee[] @relation("ManagerEmployee")
   isActive      Boolean  @default(true)
+  customFields  Json?    // Store custom field values
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   leaves        Leave[]
@@ -82,6 +93,10 @@ model Employee {
   documents     Document[]
   reviews       PerformanceReview[] @relation("Reviewee")
   reviewsGiven  PerformanceReview[] @relation("Reviewer")
+  
+  @@unique([companyId, employeeId])
+  @@index([companyId])
+  @@index([managerId])
 }
 
 model Leave {
@@ -178,4 +193,220 @@ model Notification {
   link      String?
   createdAt DateTime @default(now())
 }
+
+// ========== ENTERPRISE FEATURES ==========
+
+// Multi-tenant Company/Organization support
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  domain      String?  @unique
+  logo        String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?
+  phone       String?
+  email       String?
+  website     String?
+  taxId       String?
+  isActive    Boolean  @default(true)
+  settings    Json?    // Flexible company settings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  employees   Employee[]
+  users       User[]
+  configs     Configuration[]
+  automations AutomationJob[]
+  tickets     SupportTicket[]
+  workflows   Workflow[]
+  customFields CustomField[]
+  reports     Report[]
+  integrations Integration[]
+  
+  @@index([domain])
+}
+
+// Flexible Configuration System
+model Configuration {
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  key         String
+  value       Json     // Flexible JSON value
+  category    String   // PAYROLL, LEAVE, ATTENDANCE, GENERAL, etc.
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([companyId, key])
+  @@index([companyId, category])
+}
+
+// Automation/Jobs System (Autobots)
+model AutomationJob {
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  type        String   // AUTO_PAYROLL, AUTO_ATTENDANCE, AUTO_REMINDER, etc.
+  schedule    String   // Cron expression or schedule pattern
+  config      Json     // Job-specific configuration
+  isActive    Boolean  @default(true)
+  lastRun     DateTime?
+  nextRun     DateTime?
+  runCount    Int      @default(0)
+  status      String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([companyId, type, isActive])
+}
+
+// Support Ticket System
+model SupportTicket {
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  description String
+  category    String   // TECHNICAL, BILLING, FEATURE_REQUEST, BUG, etc.
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  assignedTo  String?
+  resolution  String?
+  attachments Json?    // Array of file URLs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt DateTime?
+  
+  replies     TicketReply[]
+  
+  @@index([companyId, status])
+  @@index([userId])
+}
+
+model TicketReply {
+  id        String        @id @default(uuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  message   String
+  isInternal Boolean      @default(false) // Internal notes vs customer-visible
+  attachments Json?
+  createdAt DateTime      @default(now())
+  
+  @@index([ticketId])
+}
+
+// Workflow System for Custom Processes
+model Workflow {
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  type        String   // LEAVE_APPROVAL, PAYROLL_PROCESSING, ONBOARDING, etc.
+  steps       Json     // Workflow steps configuration
+  triggers    Json?    // Event triggers
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([companyId, type])
+}
+
+// Custom Fields for Flexibility
+model CustomField {
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  entityType String   // EMPLOYEE, LEAVE, PAYROLL, etc.
+  fieldName   String
+  fieldType   String   // TEXT, NUMBER, DATE, SELECT, BOOLEAN, etc.
+  options     Json?    // For SELECT type
+  isRequired  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([companyId, entityType, fieldName])
+  @@index([companyId, entityType])
+}
+
+// Saved Reports
+model Report {
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  type        String   // EMPLOYEE, ATTENDANCE, LEAVE, PAYROLL, etc.
+  filters     Json     // Report filters
+  columns     Json     // Selected columns
+  schedule    String?  // Optional schedule for auto-generation
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([companyId, type])
+}
+
+// Audit Logs for Compliance
+model AuditLog {
+  id          String   @id @default(uuid())
+  companyId   String?
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entityType  String   // EMPLOYEE, LEAVE, PAYROLL, etc.
+  entityId    String?
+  changes     Json?    // Before/after changes
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([companyId, entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Enhanced Notification System
+model NotificationPreference {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email       Boolean  @default(true)
+  sms         Boolean  @default(false)
+  push        Boolean  @default(true)
+  inApp       Boolean  @default(true)
+  categories  Json     // Notification category preferences
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Integration with Third-party Services
+model Integration {
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String   // SLACK, EMAIL, SMS, ACCOUNTING_SOFTWARE, etc.
+  type        String
+  config      Json     // API keys, webhooks, etc.
+  isActive    Boolean  @default(true)
+  lastSync    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([companyId, type])
+}
+
+// Update User model to include company and relations
+// Update Employee model to include company
 

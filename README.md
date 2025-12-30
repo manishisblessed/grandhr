@@ -25,7 +25,7 @@ A comprehensive HR management platform that combines document generation, organi
 - **Import/Export** - JSON import/export functionality
 - **PDF/Image Export** - Export hierarchy as PDF or image
 
-### 👔 HR Management (SquadHR Integration)
+### 👔 HR Management (GrandHR Enterprise)
 - **Employee Management** - Complete employee CRUD operations
 - **Leave Management** - Leave requests and approvals
 - **Attendance Tracking** - Clock in/out with hours calculation
@@ -290,7 +290,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- [SquadHR](https://github.com/manishisspecial/squadHR) - HR management features
+- GrandHR - Complete HR management solution
 - [Supabase](https://supabase.com) - Backend infrastructure
 - [React](https://reactjs.org) - UI framework
 - [Tailwind CSS](https://tailwindcss.com) - Styling

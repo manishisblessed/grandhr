@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { z } from 'zod';
+import { sendEmployeeWelcomeEmail } from '../utils/email.util';
 
 const prisma = new PrismaClient();
 
@@ -173,8 +174,20 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
       include: { employee: true },
     });
 
+    // Send welcome email with credentials to employee
+    const employeeName = `${employeeData.firstName} ${employeeData.lastName}`;
+    sendEmployeeWelcomeEmail(
+      email,
+      employeeName,
+      password, // Send plain password (only time it's sent)
+      empId
+    ).catch((emailError) => {
+      // Log email error but don't fail employee creation
+      console.error('Failed to send welcome email:', emailError);
+    });
+
     res.status(201).json({
-      message: 'Employee created successfully',
+      message: 'Employee created successfully. Welcome email sent with credentials.',
       employee: {
         ...user.employee,
         user: {

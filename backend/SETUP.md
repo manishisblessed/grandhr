@@ -5,8 +5,8 @@
 1. **Update the `.env` file** in the backend directory with your PostgreSQL credentials:
 
 ```env
-DATABASE_URL="postgresql://YOUR_USERNAME:YOUR_PASSWORD@localhost:5432/squadhr?schema=public"
-JWT_SECRET="squadhr-super-secret-jwt-key-change-in-production"
+DATABASE_URL="postgresql://YOUR_USERNAME:YOUR_PASSWORD@localhost:5432/grandhr?schema=public"
+JWT_SECRET="grandhr-super-secret-jwt-key-change-in-production"
 JWT_EXPIRES_IN="7d"
 PORT=5000
 NODE_ENV=development
@@ -17,7 +17,7 @@ NODE_ENV=development
 - Password: (the password you set during PostgreSQL installation)
 - Host: `localhost`
 - Port: `5432`
-- Database: `squadhr` (will be created automatically)
+- Database: `grandhr` (will be created automatically)
 
 2. **Create the database** (if it doesn't exist):
 
@@ -26,7 +26,7 @@ You can do this in one of these ways:
 **Option A: Using pgAdmin (GUI)**
 - Open pgAdmin
 - Right-click on "Databases" → "Create" → "Database"
-- Name it: `squadhr`
+- Name it: `grandhr`
 - Click "Save"
 
 **Option B: Using Command Line**
@@ -34,14 +34,14 @@ You can do this in one of these ways:
 - Navigate to PostgreSQL bin directory (usually `C:\Program Files\PostgreSQL\XX\bin`)
 - Run: `psql -U postgres`
 - Enter your password when prompted
-- Run: `CREATE DATABASE squadhr;`
+- Run: `CREATE DATABASE grandhr;`
 - Run: `\q` to exit
 
 **Option C: Using SQL Shell (psql)**
 - Open "SQL Shell (psql)" from Start Menu
 - Press Enter for all defaults (host, port, database)
 - Enter your password
-- Run: `CREATE DATABASE squadhr;`
+- Run: `CREATE DATABASE grandhr;`
 - Run: `\q` to exit
 
 3. **Run database migrations:**

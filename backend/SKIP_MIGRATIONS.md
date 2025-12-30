@@ -41,7 +41,7 @@ The backend will work because:
 
 1. Backend should start without errors
 2. Try accessing: `http://localhost:5000/api/health`
-3. Should return: `{"status":"ok","message":"SquadHR API is running"}`
+3. Should return: `{"status":"ok","message":"GrandHR API is running"}`
 
 ## Note
 

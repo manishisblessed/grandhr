@@ -91,7 +91,7 @@
 ```bash
 curl https://your-backend.vercel.app/api/health
 ```
-Expected: `{"status":"ok","message":"SquadHR API is running"}`
+Expected: `{"status":"ok","message":"GrandHR API is running"}`
 
 ### Frontend Tests
 - [ ] Landing page loads

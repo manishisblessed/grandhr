@@ -13,6 +13,10 @@ import payrollRoutes from './routes/payroll.routes';
 import documentRoutes from './routes/document.routes';
 import reviewRoutes from './routes/review.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import automationRoutes from './routes/automation.routes';
+import supportRoutes from './routes/support.routes';
+import configurationRoutes from './routes/configuration.routes';
+import chatbotRoutes from './routes/chatbot.routes';
 
 // Middleware
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware';
@@ -66,6 +70,10 @@ app.use('/api/payroll', payrollRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/automation', automationRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/configuration', configurationRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -87,8 +95,15 @@ if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
     console.log(`🚀 GrandHR Backend Server running on port ${PORT}`);
   });
 
+  // Start automation scheduler
+  import('./services/scheduler.service').then(({ SchedulerService }) => {
+    SchedulerService.start();
+  });
+
   // Graceful shutdown
   process.on('beforeExit', async () => {
+    const { SchedulerService } = await import('./services/scheduler.service');
+    SchedulerService.stop();
     await prisma.$disconnect();
   });
 }

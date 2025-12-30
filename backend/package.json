@@ -1,7 +1,7 @@
 {
-  "name": "squadhr-backend",
+  "name": "grandhr-backend",
   "version": "1.0.0",
-  "description": "SquadHR Backend API",
+  "description": "GrandHR Backend API",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -12,7 +12,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "seed": "node seed-users.js"
+    "seed": "node seed-users.js",
+    "setup:enterprise": "tsx src/scripts/setup-enterprise.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
