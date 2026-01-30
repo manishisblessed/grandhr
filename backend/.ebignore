@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build artifacts (we'll build on server)
+# dist/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
