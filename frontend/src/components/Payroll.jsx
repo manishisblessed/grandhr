@@ -26,7 +26,7 @@ const Payroll = () => {
       <div className="space-y-6">
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading payroll...</p>
           </div>
         ) : payrolls.length > 0 ? (

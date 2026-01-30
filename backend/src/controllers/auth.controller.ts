@@ -13,7 +13,7 @@ const registerSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   employeeId: z.string().optional(),
-  role: z.enum(['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']).optional(),
+  role: z.enum(['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']).optional(),
 });
 
 const loginSchema = z.object({
@@ -43,7 +43,7 @@ export const register = async (req: Request, res: Response) => {
       data: {
         email,
         password: hashedPassword,
-        role: role || 'EMPLOYEE',
+        role: (role as any) || 'EMPLOYEE',
         employee: {
           create: {
             employeeId: empId,

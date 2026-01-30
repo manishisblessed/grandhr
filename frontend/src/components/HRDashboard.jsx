@@ -74,7 +74,7 @@ const HRDashboard = () => {
       <Layout title="Dashboard" description="HR Management Dashboard" icon="📊">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading dashboard...</p>
           </div>
         </div>

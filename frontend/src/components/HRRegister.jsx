@@ -174,12 +174,12 @@ const HRRegister = () => {
             <div className="text-center text-sm text-gray-600">
               <p>
                 Already have an account?{' '}
-                <Link to="/hr/login" className="text-primary-600 hover:text-primary-700 font-semibold">
+                <Link to="/hr/login" className="text-accent-600 hover:text-accent-700 font-semibold">
                   Sign In
                 </Link>
               </p>
               <p className="mt-2">
-                <Link to="/" className="text-primary-600 hover:text-primary-700 font-semibold">
+                <Link to="/" className="text-accent-600 hover:text-accent-700 font-semibold">
                   ← Back to Home
                 </Link>
               </p>

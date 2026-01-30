@@ -121,7 +121,7 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
     // Notify admins
     const admins = await prisma.user.findMany({
       where: {
-        role: { in: ['ADMIN', 'HR'] },
+        role: { in: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR'] },
         companyId: user.companyId || undefined,
       },
     });

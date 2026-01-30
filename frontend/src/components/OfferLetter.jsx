@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
 import { formatDate, formatCurrency } from '../utils/pdfUtils';
 import { jsPDF } from 'jspdf';
+import { saveDocument, pdfBlobToBase64 } from '../utils/documentSaver';
 
 const OfferLetter = () => {
   const [companies, setCompanies] = useState([]);
@@ -334,7 +335,36 @@ const OfferLetter = () => {
       const candidateName = (data.candidate.name || 'Candidate').replace(/\s+/g, '_');
       const companyName = (data.company.name || 'Company').replace(/\s+/g, '_');
       const filename = `Offer_Letter_${companyName}_${candidateName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Generate PDF blob and save to database
+      const pdfBlob = doc.output('blob');
       doc.save(filename);
+      
+      // Save document to database asynchronously
+      pdfBlobToBase64(pdfBlob).then((pdfBase64) => {
+        saveDocument({
+          documentType: 'OFFER_LETTER',
+          title: `Offer Letter - ${data.candidate.name || 'Candidate'}`,
+          content: previewContent || `Offer Letter for ${data.candidate.name} - ${data.job.position}`,
+          pdfData: pdfBase64,
+          metadata: {
+            candidateName: data.candidate.name,
+            companyName: data.company.name,
+            position: data.job.position,
+            joiningDate: data.job.joiningDate,
+            salary: data.compensation.annualSalary,
+            filename,
+          },
+        }).then((result) => {
+          if (result.success) {
+            console.log('Document saved successfully:', result.document);
+          } else {
+            console.warn('Failed to save document:', result.error);
+          }
+        });
+      }).catch((error) => {
+        console.error('Error saving document:', error);
+      });
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF: ' + error.message);

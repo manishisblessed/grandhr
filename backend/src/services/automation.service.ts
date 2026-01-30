@@ -587,7 +587,7 @@ export class AutomationService {
     if (currentDate.getDate() === payrollDate.getDate() - 1) {
       const hrUsers = await prisma.user.findMany({
         where: {
-          role: { in: ['ADMIN', 'HR'] },
+          role: { in: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR'] },
           ...(companyId && { companyId }),
         },
       });

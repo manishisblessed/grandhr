@@ -49,7 +49,7 @@ export const getAdminDashboard = async (req: AuthRequest, res: Response) => {
 
     // Department-wise employee count
     const departmentStats = await prisma.employee.groupBy({
-      by: ['department'],
+      by: ['departmentId'],
       where: { isActive: true },
       _count: true,
     });
@@ -69,7 +69,7 @@ export const getAdminDashboard = async (req: AuthRequest, res: Response) => {
         monthlyPayrolls,
       },
       departmentStats: departmentStats.map((d) => ({
-        department: d.department || 'Unassigned',
+        departmentId: d.departmentId || null,
         count: d._count,
       })),
       leaveStats: leaveStats.map((l) => ({
@@ -159,8 +159,8 @@ export const getEmployeeDashboard = async (req: AuthRequest, res: Response) => {
         firstName: user.employee.firstName,
         lastName: user.employee.lastName,
         employeeId: user.employee.employeeId,
-        designation: user.employee.designation,
-        department: user.employee.department,
+        designationId: user.employee.designationId,
+        departmentId: user.employee.departmentId,
       },
       stats: {
         pendingLeaves,

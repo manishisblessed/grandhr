@@ -44,15 +44,14 @@ async function setupEnterprise() {
         data: {
           email: adminEmail,
           password: hashedPassword,
-          role: 'ADMIN',
+          role: 'COMPANY_ADMIN',
           companyId: company.id,
           employee: {
             create: {
               employeeId: 'ADMIN001',
               firstName: 'Admin',
               lastName: 'User',
-              department: 'Administration',
-              designation: 'System Administrator',
+              // department and designation will be set after creating them
               salary: 0,
             },
           },

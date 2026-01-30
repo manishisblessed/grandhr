@@ -83,7 +83,7 @@ export class ChatbotService {
     if (message.includes('profile') || message.includes('information') || message.includes('details')) {
       if (isEmployee && user?.employee) {
         return {
-          message: `Here's your profile information:\n\nName: ${user.employee.firstName} ${user.employee.lastName}\nEmployee ID: ${user.employee.employeeId}\nDepartment: ${user.employee.department || 'Not set'}\nDesignation: ${user.employee.designation || 'Not set'}\n\nYou can view your full profile in the Employees section.`,
+          message: `Here's your profile information:\n\nName: ${user.employee.firstName} ${user.employee.lastName}\nEmployee ID: ${user.employee.employeeId}\nDepartment ID: ${user.employee.departmentId || 'Not set'}\nDesignation ID: ${user.employee.designationId || 'Not set'}\n\nYou can view your full profile in the Employees section.`,
           suggestions: ['View full profile', 'Update profile', 'View documents'],
           actionRequired: true,
           actionType: 'navigate',

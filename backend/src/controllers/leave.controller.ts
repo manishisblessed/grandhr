@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { z } from 'zod';
+import { sendEmail } from '../utils/email.util';
+import { createNotificationHelper } from './notification.controller';
 
 const prisma = new PrismaClient();
 
@@ -16,6 +18,19 @@ const calculateDays = (startDate: Date, endDate: Date): number => {
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   return diffDays;
+};
+
+const getLeaveTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    CASUAL_LEAVE: 'Casual Leave',
+    SICK_LEAVE: 'Sick Leave',
+    EARNED_LEAVE: 'Earned Leave',
+    MATERNITY_LEAVE: 'Maternity Leave',
+    PATERNITY_LEAVE: 'Paternity Leave',
+    COMP_OFF: 'Compensatory Off',
+    LOP: 'Loss of Pay',
+  };
+  return labels[type] || type;
 };
 
 export const applyLeave = async (req: AuthRequest, res: Response) => {
@@ -53,6 +68,33 @@ export const applyLeave = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    // Create notification for the employee
+    await createNotificationHelper(
+      userId,
+      'Leave Request Submitted',
+      `Your ${getLeaveTypeLabel(data.type)} request for ${days} day(s) has been submitted and is pending approval.`,
+      'LEAVE',
+      '/hr/leaves'
+    );
+
+    // Notify HR/Managers about new leave request
+    const hrUsers = await prisma.user.findMany({
+      where: {
+        role: { in: ['COMPANY_ADMIN', 'HR', 'MANAGER'] as const },
+        isActive: true,
+      },
+    });
+
+    for (const hr of hrUsers) {
+      await createNotificationHelper(
+        hr.id,
+        'New Leave Request',
+        `${user.employee.firstName} ${user.employee.lastName} has applied for ${getLeaveTypeLabel(data.type)} (${days} days).`,
+        'LEAVE',
+        '/hr/leaves'
+      );
+    }
+
     res.status(201).json({
       message: 'Leave applied successfully',
       leave,
@@ -89,6 +131,7 @@ export const getLeaves = async (req: AuthRequest, res: Response) => {
               lastName: true,
               employeeId: true,
               designation: true,
+              department: true,
             },
           },
         },
@@ -188,15 +231,121 @@ export const updateLeaveStatus = async (req: AuthRequest, res: Response) => {
       data: updateData,
       include: {
         employee: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            employeeId: true,
+          include: {
+            user: true,
           },
         },
       },
     });
+
+    // Get approver info
+    const approver = await prisma.user.findUnique({
+      where: { id: req.userId! },
+      include: { employee: true },
+    });
+
+    const approverName = approver?.employee 
+      ? `${approver.employee.firstName} ${approver.employee.lastName}`
+      : approver?.email || 'HR Team';
+
+    // Create in-app notification for the employee
+    if (leave.employee.user) {
+      const notificationTitle = status === 'APPROVED' 
+        ? 'Leave Request Approved! ✅' 
+        : 'Leave Request Rejected ❌';
+      
+      const notificationMessage = status === 'APPROVED'
+        ? `Your ${getLeaveTypeLabel(leave.type)} request for ${leave.days} day(s) from ${new Date(leave.startDate).toLocaleDateString()} to ${new Date(leave.endDate).toLocaleDateString()} has been approved by ${approverName}.`
+        : `Your ${getLeaveTypeLabel(leave.type)} request has been rejected by ${approverName}. Reason: ${rejectedReason || 'Not specified'}`;
+
+      await createNotificationHelper(
+        leave.employee.user.id,
+        notificationTitle,
+        notificationMessage,
+        status === 'APPROVED' ? 'SUCCESS' : 'WARNING',
+        '/hr/leaves'
+      );
+
+      // Send email notification
+      const emailSubject = status === 'APPROVED'
+        ? `Leave Request Approved - GrandHR`
+        : `Leave Request Rejected - GrandHR`;
+
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: ${status === 'APPROVED' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+            .detail-row:last-child { border-bottom: none; }
+            .label { font-weight: bold; color: #666; }
+            .value { color: #333; }
+            .status { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; }
+            .status-approved { background: #D1FAE5; color: #065F46; }
+            .status-rejected { background: #FEE2E2; color: #991B1B; }
+            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>${status === 'APPROVED' ? '✅ Leave Approved!' : '❌ Leave Rejected'}</h1>
+            </div>
+            <div class="content">
+              <p>Dear ${leave.employee.firstName},</p>
+              
+              <p>Your leave request has been <strong>${status.toLowerCase()}</strong> by ${approverName}.</p>
+              
+              <div class="details">
+                <div class="detail-row">
+                  <span class="label">Leave Type:</span>
+                  <span class="value">${getLeaveTypeLabel(leave.type)}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Duration:</span>
+                  <span class="value">${new Date(leave.startDate).toLocaleDateString()} - ${new Date(leave.endDate).toLocaleDateString()}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Days:</span>
+                  <span class="value">${leave.days} day(s)</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Status:</span>
+                  <span class="status ${status === 'APPROVED' ? 'status-approved' : 'status-rejected'}">${status}</span>
+                </div>
+                ${status === 'REJECTED' && rejectedReason ? `
+                <div class="detail-row">
+                  <span class="label">Reason:</span>
+                  <span class="value">${rejectedReason}</span>
+                </div>
+                ` : ''}
+              </div>
+              
+              ${status === 'APPROVED' 
+                ? `<p>Your leave has been recorded in the system. Enjoy your time off!</p>`
+                : `<p>If you have any questions about this decision, please contact your HR department.</p>`
+              }
+              
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} GrandHR. All rights reserved.</p>
+                <p>This is an automated email. Please do not reply.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Send email (don't wait for it)
+      sendEmail(leave.employee.user.email, emailSubject, emailHtml).catch(err => {
+        console.error('Failed to send leave status email:', err);
+      });
+    }
 
     res.json({
       message: 'Leave status updated successfully',
@@ -263,4 +412,3 @@ export const getLeaveBalance = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: error.message || 'Failed to fetch leave balance' });
   }
 };
-

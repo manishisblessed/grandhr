@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { useToast } from '../contexts/ToastContext';
 import Layout from './Layout';
 
 const HRLogin = () => {
@@ -9,6 +10,7 @@ const HRLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,9 +25,18 @@ const HRLogin = () => {
       localStorage.setItem('hr_token', token);
       localStorage.setItem('hr_user', JSON.stringify(user));
       
-      navigate('/hr/dashboard');
+      showSuccess(`Welcome back, ${user?.employee?.firstName || user?.email}!`);
+      
+      // Navigate based on role
+      if (user?.role === 'EMPLOYEE') {
+        navigate('/employee/dashboard');
+      } else {
+        navigate('/hr/dashboard');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      const errorMsg = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setError(errorMsg);
+      showError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -77,12 +88,12 @@ const HRLogin = () => {
             <div className="text-center text-sm text-gray-600 space-y-2">
               <p className="mt-4">
                 Don't have an account?{' '}
-                <Link to="/hr/register" className="text-primary-600 hover:text-primary-700 font-semibold">
+                <Link to="/hr/register" className="text-accent-600 hover:text-accent-700 font-semibold">
                   Register as Employee
                 </Link>
               </p>
               <p>
-                <Link to="/" className="text-primary-600 hover:text-primary-700 font-semibold">
+                <Link to="/" className="text-accent-600 hover:text-accent-700 font-semibold">
                   ← Back to Home
                 </Link>
               </p>

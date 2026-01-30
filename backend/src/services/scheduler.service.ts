@@ -44,14 +44,40 @@ export class SchedulerService {
     try {
       // Check database connection first
       try {
-        await prisma.$queryRaw`SELECT 1`;
-      } catch (connectionError: any) {
-        // Silently skip if database is not available
-        if (connectionError.message?.includes("Can't reach database server") || 
-            connectionError.message?.includes("P1001")) {
-          console.warn('⚠️  Database not available, skipping scheduler check');
+        // Check if DATABASE_URL is properly configured
+        if (!process.env.DATABASE_URL || 
+            (!process.env.DATABASE_URL.startsWith('mongodb://') && 
+             !process.env.DATABASE_URL.startsWith('mongodb+srv://'))) {
+          console.warn('⚠️  DATABASE_URL not configured properly, skipping scheduler check');
           return;
         }
+        await prisma.user.findFirst({ take: 1 });
+      } catch (connectionError: any) {
+        // Silently skip if database is not available or misconfigured
+        const errorMessage = connectionError.message || '';
+        const errorCode = connectionError.code || '';
+        const errorName = connectionError.name || '';
+        
+        const metaMessage = connectionError.meta?.message || '';
+        
+        // Check for various database connection errors
+        const isDatabaseError = 
+          errorMessage.includes("Can't reach database server") || 
+          errorMessage.includes("P1001") ||
+          errorMessage.includes("the URL must start with the protocol") ||
+          errorMessage.includes("Error validating datasource") ||
+          errorMessage.includes("empty database name not allowed") ||
+          metaMessage.includes("empty database name not allowed") ||
+          errorCode === 'P1012' ||
+          errorCode === 'P2010' ||
+          errorName === 'PrismaClientInitializationError' ||
+          errorName === 'PrismaClientKnownRequestError';
+        
+        if (isDatabaseError) {
+          console.warn('⚠️  Database not configured or unavailable, skipping scheduler check');
+          return;
+        }
+        // Re-throw unexpected errors
         throw connectionError;
       }
 

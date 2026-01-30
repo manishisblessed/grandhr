@@ -24,7 +24,7 @@ const createEmployeeSchema = z.object({
   designation: z.string().optional(),
   salary: z.number().optional(),
   managerId: z.string().optional(),
-  role: z.enum(['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']).optional(),
+  role: z.enum(['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']).optional(),
 });
 
 export const getAllEmployees = async (req: AuthRequest, res: Response) => {
@@ -162,12 +162,21 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
       data: {
         email,
         password: hashedPassword,
-        role: role || 'EMPLOYEE',
+        role: (role as any) || 'EMPLOYEE',
         employee: {
           create: {
             employeeId: empId,
-            ...employeeData,
+            firstName: employeeData.firstName,
+            lastName: employeeData.lastName,
+            phone: employeeData.phone,
+            address: employeeData.address,
+            city: employeeData.city,
+            state: employeeData.state,
+            zipCode: employeeData.zipCode,
+            country: employeeData.country,
+            salary: employeeData.salary,
             dateOfBirth,
+            managerId: employeeData.managerId || undefined,
           },
         },
       },
@@ -188,14 +197,14 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({
       message: 'Employee created successfully. Welcome email sent with credentials.',
-      employee: {
+      employee: user.employee ? {
         ...user.employee,
         user: {
           id: user.id,
           email: user.email,
           role: user.role,
         },
-      },
+      } : null,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -262,7 +271,7 @@ export const getEmployeesByDepartment = async (req: AuthRequest, res: Response) 
 
     const employees = await prisma.employee.findMany({
       where: {
-        department,
+        departmentId: department,
         isActive: true,
       },
       include: {

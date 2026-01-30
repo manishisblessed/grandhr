@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import api from '../utils/api';
 
 const AuthContext = createContext({});
 
@@ -14,56 +14,92 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Check for existing session on mount
+    const checkSession = () => {
+      try {
+        const token = localStorage.getItem('hr_token');
+        const userData = localStorage.getItem('hr_user');
+        
+        if (token && userData) {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+        localStorage.removeItem('hr_token');
+        localStorage.removeItem('hr_user');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    checkSession();
   }, []);
 
-  const signUp = async (email, password) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    return { data, error };
+  const signUp = async (email, password, name) => {
+    try {
+      const response = await api.post('/auth/register', {
+        email,
+        password,
+        name,
+      });
+      
+      const { user, token } = response.data;
+      
+      localStorage.setItem('hr_token', token);
+      localStorage.setItem('hr_user', JSON.stringify(user));
+      setUser(user);
+      
+      return { data: { user, token }, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: error.response?.data?.message || 'Registration failed',
+      };
+    }
   };
 
   const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { data, error };
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+      });
+      
+      const { user, token } = response.data;
+      
+      localStorage.setItem('hr_token', token);
+      localStorage.setItem('hr_user', JSON.stringify(user));
+      setUser(user);
+      
+      return { data: { user, token }, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: error.response?.data?.message || 'Login failed',
+      };
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
+    try {
+      // Optionally call backend logout endpoint
+      await api.post('/auth/logout').catch(() => {});
+    } catch (error) {
+      // Ignore errors on logout
+    } finally {
+      localStorage.removeItem('hr_token');
+      localStorage.removeItem('hr_user');
       setUser(null);
-      setSession(null);
     }
-    return { error };
+    
+    return { error: null };
   };
 
   const value = {
     user,
-    session,
     loading,
     signUp,
     signIn,
