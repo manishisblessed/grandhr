@@ -710,7 +710,6 @@ const Employees = () => {
           </div>
         </div>
       )}
-      </div>
     </HRLayout>
   );
 };

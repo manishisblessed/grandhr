@@ -594,7 +594,6 @@ const Leaves = () => {
           </div>
         </div>
       )}
-      </div>
     </HRLayout>
   );
 };
