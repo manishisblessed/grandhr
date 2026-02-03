@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useToast } from '../contexts/ToastContext';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 
 const Attendance = () => {
   const [attendance, setAttendance] = useState([]);
@@ -133,8 +133,15 @@ const Attendance = () => {
   }, 0);
 
   return (
-    <Layout title="Attendance" description="Track your daily attendance" icon="⏰">
+    <HRLayout>
       <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+            <p className="text-gray-500">Track your daily attendance</p>
+          </div>
+        </div>
         {/* Current Time Card */}
         <div className="bg-gradient-to-r from-accent-600 to-purple-600 rounded-2xl p-6 text-white">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -326,7 +333,7 @@ const Attendance = () => {
           )}
         </div>
       </div>
-    </Layout>
+    </HRLayout>
   );
 };
 

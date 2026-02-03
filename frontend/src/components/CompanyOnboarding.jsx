@@ -166,7 +166,16 @@ const CompanyOnboarding = () => {
         navigate('/hr/dashboard');
       }, 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      // Handle validation errors with detailed messages
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+        const errorMessages = err.response.data.errors.map(e => {
+          const field = e.path?.join('.') || 'Field';
+          return `${field}: ${e.message}`;
+        }).join('\n');
+        setError(errorMessages || err.response?.data?.message || 'Registration failed. Please try again.');
+      } else {
+        setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -200,7 +209,7 @@ const CompanyOnboarding = () => {
 
         <div className="card shadow-xl">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 whitespace-pre-line">
               {error}
             </div>
           )}

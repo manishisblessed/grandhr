@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useToast } from '../contexts/ToastContext';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 
 const EmployeeDashboard = () => {
   const [profile, setProfile] = useState(null);
@@ -110,16 +110,16 @@ const EmployeeDashboard = () => {
 
   if (loading) {
     return (
-      <Layout title="My Dashboard" description="Your personal workspace" icon="🏠">
+      <HRLayout>
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600"></div>
         </div>
-      </Layout>
+      </HRLayout>
     );
   }
 
   return (
-    <Layout title="My Dashboard" description="Your personal workspace" icon="🏠">
+    <HRLayout>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-accent-600 to-purple-600 rounded-2xl p-6 text-white">
@@ -335,7 +335,7 @@ const EmployeeDashboard = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </HRLayout>
   );
 };
 

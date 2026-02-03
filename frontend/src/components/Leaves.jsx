@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useToast } from '../contexts/ToastContext';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 
 const Leaves = () => {
   const [leaves, setLeaves] = useState([]);
@@ -143,12 +143,15 @@ const Leaves = () => {
   const pendingCount = leaves.filter(l => l.status === 'PENDING').length;
 
   return (
-    <Layout 
-      title={isHR ? "Leave Management" : "My Leaves"} 
-      description={isHR ? "Manage and approve employee leave requests" : "View and apply for leaves"} 
-      icon="📅"
-    >
+    <HRLayout>
       <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{isHR ? "Leave Management" : "My Leaves"}</h1>
+            <p className="text-gray-500">{isHR ? "Manage and approve employee leave requests" : "View and apply for leaves"}</p>
+          </div>
+        </div>
         {/* Leave Balance Card (for employees) */}
         {!isHR && leaveBalance && (
           <div className="card p-6">
@@ -591,7 +594,8 @@ const Leaves = () => {
           </div>
         </div>
       )}
-    </Layout>
+      </div>
+    </HRLayout>
   );
 };
 

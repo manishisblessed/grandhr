@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useToast } from '../contexts/ToastContext';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
@@ -165,12 +165,15 @@ const Employees = () => {
   const designations = ['Software Engineer', 'Senior Software Engineer', 'Tech Lead', 'Manager', 'HR Executive', 'HR Manager', 'Sales Executive', 'Marketing Executive', 'Analyst', 'Team Lead', 'Director', 'Vice President'];
 
   return (
-    <Layout 
-      title={isHR ? "Employees" : "My Profile"} 
-      description={isHR ? "Manage your organization's workforce" : "View your employee profile"} 
-      icon="👥"
-    >
+    <HRLayout>
       <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{isHR ? "Employees" : "My Profile"}</h1>
+            <p className="text-gray-500">{isHR ? "Manage your organization's workforce" : "View your employee profile"}</p>
+          </div>
+        </div>
         {/* Stats for HR */}
         {isHR && (
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -707,7 +710,8 @@ const Employees = () => {
           </div>
         </div>
       )}
-    </Layout>
+      </div>
+    </HRLayout>
   );
 };
 

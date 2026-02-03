@@ -36,7 +36,7 @@ DATABASE_URL="mongodb://localhost:27017/grandhr"
 
 **For MongoDB Atlas:**
 ```env
-DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryWrites=true&w=majority"
+DATABASE_URL="mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/grandhr?retryWrites=true&w=majority"
 ```
 
 ### Step 3: Restart Server

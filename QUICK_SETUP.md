@@ -13,7 +13,7 @@ npm install
 # Set up MongoDB connection in .env
 # DATABASE_URL=mongodb://localhost:27017/grandhr
 # OR for MongoDB Atlas:
-# DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/grandhr
+# DATABASE_URL=mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/grandhr
 
 # Generate Prisma client for MongoDB
 npx prisma generate
@@ -52,7 +52,7 @@ npm run dev
 1. Create account at https://www.mongodb.com/cloud/atlas
 2. Create a cluster
 3. Get connection string
-4. Use: `mongodb+srv://username:password@cluster.mongodb.net/grandhr`
+4. Use: `mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/grandhr`
 
 ## ✅ What's New
 

@@ -59,6 +59,18 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/hr/register" element={<HRRegister />} />
           <Route path="/hr/company-onboarding" element={<CompanyOnboarding />} />
           
+          {/* HR Management Routes - Full page without navbar/footer */}
+          <Route path="/hr/dashboard" element={<HRDashboard />} />
+          <Route path="/hr/employees" element={<Employees />} />
+          <Route path="/hr/leaves" element={<Leaves />} />
+          <Route path="/hr/attendance" element={<Attendance />} />
+          <Route path="/hr/payroll" element={<Payroll />} />
+          <Route path="/hr/automation" element={<Automation />} />
+          <Route path="/hr/support" element={<Support />} />
+          <Route path="/hr/notifications" element={<NotificationsPage />} />
+          {/* Employee Self-Service */}
+          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          
           {/* App pages - with navbar */}
           <Route element={<AppLayout />}>
             {/* Document routes - require authentication */}
@@ -118,17 +130,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 </ProtectedRoute>
               }
             />
-            {/* HR Management Routes */}
-            <Route path="/hr/dashboard" element={<HRDashboard />} />
-            <Route path="/hr/employees" element={<Employees />} />
-            <Route path="/hr/leaves" element={<Leaves />} />
-            <Route path="/hr/attendance" element={<Attendance />} />
-            <Route path="/hr/payroll" element={<Payroll />} />
-            <Route path="/hr/automation" element={<Automation />} />
-            <Route path="/hr/support" element={<Support />} />
-            <Route path="/hr/notifications" element={<NotificationsPage />} />
-            {/* Employee Self-Service */}
-            <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
             {/* Public Pages */}
             <Route path="/solutions" element={<Solutions />} />
             <Route path="/features" element={<Features />} />

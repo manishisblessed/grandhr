@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNotifications } from '../contexts/NotificationContext';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 
 const NotificationsPage = () => {
   const { 
@@ -44,8 +44,16 @@ const NotificationsPage = () => {
   };
 
   return (
-    <Layout title="Notifications" description="Stay updated with all your notifications" icon="🔔">
+    <HRLayout>
       <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+            <p className="text-gray-500">Stay updated with all your notifications</p>
+          </div>
+        </div>
+        
         {/* Header Actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           {/* Filters */}
@@ -179,7 +187,7 @@ const NotificationsPage = () => {
           )}
         </div>
       </div>
-    </Layout>
+    </HRLayout>
   );
 };
 

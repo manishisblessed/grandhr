@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 import { api } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -125,21 +125,21 @@ const Support = () => {
 
   if (loading) {
     return (
-      <Layout title="Support" description="Get help and support">
+      <HRLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-white text-xl">Loading support tickets...</div>
+          <div className="text-gray-600 text-xl">Loading support tickets...</div>
         </div>
-      </Layout>
+      </HRLayout>
     );
   }
 
   return (
-    <Layout title="Support & Tickets" description="Get help and manage support tickets">
-      <div className="w-full px-[1%]">
-        <div className="flex justify-between items-center mb-6">
+    <HRLayout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-2">🎫 Support Tickets</h1>
-            <p className="text-gray-300">Get help, report issues, or request features</p>
+            <h1 className="text-2xl font-bold text-gray-900">Support & Tickets</h1>
+            <p className="text-gray-500">Get help, report issues, or request features</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -366,7 +366,7 @@ const Support = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </HRLayout>
   );
 };
 

@@ -8,12 +8,15 @@ const prisma = new PrismaClient();
 
 const companyRegisterSchema = z.object({
   company: z.object({
-    name: z.string().min(1),
+    name: z.string().min(1, 'Company name is required'),
     legalName: z.string().optional(),
     domain: z.string().optional(),
-    email: z.string().email(),
+    email: z.string().email('Invalid company email address'),
     phone: z.string().optional(),
-    website: z.string().url().optional().or(z.literal('')),
+    website: z.string().optional().refine(
+      (val) => !val || val === '' || /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(val),
+      { message: 'Invalid website URL' }
+    ),
     address: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
@@ -25,10 +28,10 @@ const companyRegisterSchema = z.object({
     gstNumber: z.string().optional(),
   }),
   admin: z.object({
-    email: z.string().email(),
-    password: z.string().min(8),
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
+    email: z.string().email('Invalid admin email address'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
     role: z.enum(['COMPANY_ADMIN', 'HR', 'MANAGER', 'EMPLOYEE']).optional(),
   }),
 });

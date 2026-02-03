@@ -174,7 +174,7 @@ This document summarizes the comprehensive migration from Supabase/PostgreSQL to
 ```env
 DATABASE_URL=mongodb://localhost:27017/grandhr
 # OR for MongoDB Atlas:
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
+DATABASE_URL=mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/grandhr?retryWrites=true&w=majority
 
 JWT_SECRET=your-secret-key
 CORS_ORIGIN=http://localhost:5173

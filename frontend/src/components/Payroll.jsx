@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 
 const Payroll = () => {
   const [payrolls, setPayrolls] = useState([]);
@@ -22,8 +22,15 @@ const Payroll = () => {
   };
 
   return (
-    <Layout title="Payroll" description="View your payroll information" icon="💰">
+    <HRLayout>
       <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Payroll</h1>
+            <p className="text-gray-500">View your payroll information</p>
+          </div>
+        </div>
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600 mx-auto"></div>
@@ -84,7 +91,7 @@ const Payroll = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </HRLayout>
   );
 };
 

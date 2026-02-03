@@ -68,12 +68,12 @@ DATABASE_URL="mongodb://localhost:27017/grandhr"
 
 ### MongoDB Atlas (Cloud)
 ```env
-DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryWrites=true&w=majority"
+DATABASE_URL="mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/grandhr?retryWrites=true&w=majority"
 ```
 
 ### MongoDB with Authentication
 ```env
-DATABASE_URL="mongodb://username:password@localhost:27017/grandhr?authSource=admin"
+DATABASE_URL="mongodb://<username>:<password>@localhost:27017/grandhr?authSource=admin"
 ```
 
 ## ⚠️ Common Issues

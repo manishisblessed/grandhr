@@ -14,7 +14,7 @@ DATABASE_URL="mongodb://localhost:27017/grandhr"
 
 ### MongoDB Atlas:
 ```env
-DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryWrites=true&w=majority"
+DATABASE_URL="mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/grandhr?retryWrites=true&w=majority"
 ```
 **Note**: `/grandhr` after the host is the database name - **REQUIRED**
 
@@ -26,7 +26,7 @@ DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryW
 DATABASE_URL="mongodb://localhost:27017"
 
 # ❌ WRONG - Missing database name
-DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net"
+DATABASE_URL="mongodb+srv://<user>:<pass>@cluster.mongodb.net"
 ```
 
 ### Correct Format:
@@ -35,7 +35,7 @@ DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net"
 DATABASE_URL="mongodb://localhost:27017/grandhr"
 
 # ✅ CORRECT - Has database name
-DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net/grandhr"
+DATABASE_URL="mongodb+srv://<user>:<pass>@cluster.mongodb.net/grandhr"
 ```
 
 ## 📝 Connection String Structure
@@ -69,12 +69,12 @@ mongodb://[username:password@]host[:port]/[database][?options]
 
 ### Local with Authentication:
 ```env
-DATABASE_URL="mongodb://admin:password123@localhost:27017/grandhr?authSource=admin"
+DATABASE_URL="mongodb://<username>:<password>@localhost:27017/grandhr?authSource=admin"
 ```
 
 ### Atlas with Options:
 ```env
-DATABASE_URL="mongodb+srv://myuser:mypass@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority&appName=GrandHR"
+DATABASE_URL="mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/grandhr?retryWrites=true&w=majority&appName=GrandHR"
 ```
 
 ### Local Default:

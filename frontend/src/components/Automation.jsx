@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from './Layout';
+import HRLayout from './HRLayout';
 import { api } from '../utils/api';
 
 const Automation = () => {
@@ -108,21 +108,21 @@ const Automation = () => {
 
   if (loading) {
     return (
-      <Layout title="Automation" description="Manage automated HR tasks">
+      <HRLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-white text-xl">Loading automation jobs...</div>
+          <div className="text-gray-600 text-xl">Loading automation jobs...</div>
         </div>
-      </Layout>
+      </HRLayout>
     );
   }
 
   return (
-    <Layout title="Automation (Autobots)" description="Automate HR tasks and processes">
-      <div className="w-full px-[1%]">
-        <div className="flex justify-between items-center mb-6">
+    <HRLayout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-2">🤖 Automation Jobs</h1>
-            <p className="text-gray-300">Automate repetitive HR tasks to save time and reduce errors</p>
+            <h1 className="text-2xl font-bold text-gray-900">Automation</h1>
+            <p className="text-gray-500">Automate repetitive HR tasks to save time and reduce errors</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -275,7 +275,7 @@ const Automation = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </HRLayout>
   );
 };
 

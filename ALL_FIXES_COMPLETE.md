@@ -48,13 +48,13 @@ Your DATABASE_URL is missing the database name.
 **❌ Wrong:**
 ```env
 DATABASE_URL="mongodb://localhost:27017"
-DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net"
+DATABASE_URL="mongodb+srv://<user>:<pass>@cluster.mongodb.net"
 ```
 
 **✅ Correct:**
 ```env
 DATABASE_URL="mongodb://localhost:27017/grandhr"
-DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net/grandhr"
+DATABASE_URL="mongodb+srv://<user>:<pass>@cluster.mongodb.net/grandhr"
 ```
 
 **Note:** The `/grandhr` part is the **database name** - it's **REQUIRED**!
