@@ -31,6 +31,9 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 
+// Trust proxy (required when behind Nginx/load balancer)
+app.set('trust proxy', 1);
+
 // Security Middleware
 app.use(helmet({
   contentSecurityPolicy: {
