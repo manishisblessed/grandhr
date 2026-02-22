@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+// Auth context removed - using HR JWT auth only
 import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
-  const { isAuthenticated, user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
 
   // Check if HR user is logged in
   const hrUser = JSON.parse(localStorage.getItem('hr_user') || 'null');
@@ -51,13 +45,13 @@ const Navbar = () => {
     ]
   ) : [];
 
-  // Supabase auth menu items
-  const supabaseMenuItems = isAuthenticated ? [
+  // Hierarchy menu item (available to all users)
+  const hierarchyMenuItems = [
     { name: 'Hierarchy', path: '/hierarchy', icon: '🏢' },
-  ] : [];
+  ];
 
   // Combine menu items based on auth status
-  const menuItems = isHRLoggedIn ? hrMenuItems : [...publicMenuItems, ...supabaseMenuItems];
+  const menuItems = isHRLoggedIn ? hrMenuItems : [...publicMenuItems, ...hierarchyMenuItems];
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -86,7 +80,6 @@ const Navbar = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-2">
             {menuItems.map((item) => {
-              if (item.requiresAuth && !isAuthenticated) return null;
               if (item.requiresHR && !isHRAdmin) return null;
               
               if (item.isAnchor) {
@@ -142,16 +135,6 @@ const Navbar = () => {
                   Sign Out
                 </button>
               </div>
-            ) : isAuthenticated ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">{user?.email}</span>
-                <button
-                  onClick={handleSignOut}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
-                >
-                  Sign Out
-                </button>
-              </div>
             ) : (
               <>
                 <Link
@@ -190,7 +173,6 @@ const Navbar = () => {
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="space-y-2">
               {menuItems.map((item) => {
-                if (item.requiresAuth && !isAuthenticated) return null;
                 if (item.requiresHR && !isHRAdmin) return null;
                 
                 if (item.isAnchor) {
@@ -235,16 +217,6 @@ const Navbar = () => {
                         setIsMenuOpen(false);
                         navigate('/hr/login');
                       }}
-                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      Sign Out
-                    </button>
-                  </>
-                ) : isAuthenticated ? (
-                  <>
-                    <div className="px-4 py-2 text-sm text-gray-600">{user?.email}</div>
-                    <button
-                      onClick={handleSignOut}
                       className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                       Sign Out

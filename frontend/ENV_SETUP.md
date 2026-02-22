@@ -2,28 +2,23 @@
 
 ## 📝 Quick Setup
 
-1. **Copy the example file:**
+1. **Create `.env` file** in the `frontend/` folder:
    ```bash
    cd frontend
-   cp .env.example .env
+   touch .env
    ```
 
-2. **Edit `.env` file** and add your Supabase credentials:
+2. **Edit `.env` file** and add your backend API URL:
    ```env
-   VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-key-here
    VITE_API_URL=http://localhost:5000/api
    ```
 
-3. **Get your Supabase credentials:**
-   - Go to [Supabase Dashboard](https://app.supabase.com)
-   - Select your project
-   - Go to Settings → API
-   - Copy:
-     - **Project URL** → `VITE_SUPABASE_URL`
-     - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
+   For production (after deploying backend):
+   ```env
+   VITE_API_URL=https://your-backend-url.com/api
+   ```
 
-4. **Restart the dev server** after creating/updating `.env`:
+3. **Restart the dev server** after creating/updating `.env`:
    ```bash
    # Stop the server (Ctrl+C)
    npm run dev
@@ -35,16 +30,17 @@
 - Vite only loads `.env` files from the project root (where `vite.config.js` is)
 - After changing `.env`, you must restart the dev server
 - Never commit `.env` to Git (it's in `.gitignore`)
+- **MongoDB is used** - no Supabase configuration needed
 
 ## 🔍 Troubleshooting
 
-**Error: "Supabase URL or Anon Key not found"**
+**Error: "API URL not found"**
 - Check that `.env` is in `frontend/` folder
-- Verify variable names start with `VITE_`
+- Verify variable name is `VITE_API_URL`
 - Restart the dev server
 
-**Error: "supabaseUrl is required"**
-- Make sure `.env` file exists in `frontend/` folder
-- Check that values are not empty
-- Restart the dev server
+**Error: "Cannot connect to backend"**
+- Make sure backend is running on the specified port
+- Check that `VITE_API_URL` points to the correct backend URL
+- Verify CORS is configured in backend for your frontend URL
 

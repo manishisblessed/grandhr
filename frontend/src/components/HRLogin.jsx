@@ -21,7 +21,7 @@ const HRLogin = () => {
       const response = await api.post('/auth/login', { email, password });
       const { user, token } = response.data;
       
-      // Store HR auth separately from Supabase auth
+      // Store HR auth in localStorage
       localStorage.setItem('hr_token', token);
       localStorage.setItem('hr_user', JSON.stringify(user));
       

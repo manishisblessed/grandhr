@@ -2,7 +2,7 @@
 
 ![GrandHR](https://img.shields.io/badge/GrandHR-HR%20Management-blue)
 ![React](https://img.shields.io/badge/React-18.2.0-61DAFB)
-![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E)
+![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 A comprehensive HR management platform that combines document generation, organizational hierarchy management, and complete HR operations in one unified system.
@@ -21,7 +21,7 @@ A comprehensive HR management platform that combines document generation, organi
 - **Visual Organization Chart** - Interactive hierarchy visualization
 - **Employee Management** - Add, edit, delete employees
 - **Layout Control** - Horizontal/vertical subordinate layouts
-- **Cloud Sync** - Automatic Supabase synchronization
+- **MongoDB Database** - Scalable NoSQL database with MongoDB Atlas
 - **Import/Export** - JSON import/export functionality
 - **PDF/Image Export** - Export hierarchy as PDF or image
 
@@ -49,17 +49,17 @@ A comprehensive HR management platform that combines document generation, organi
 - **Express** - Web framework
 - **TypeScript** - Type safety
 - **Prisma** - ORM
-- **PostgreSQL** - Database (via Supabase)
+- **MongoDB** - Database (MongoDB Atlas)
 
 ### Database & Auth
-- **Supabase** - PostgreSQL database, authentication, and storage
+- **MongoDB Atlas** - Cloud MongoDB database
 - **JWT** - Token-based authentication for HR system
 
 ## 📋 Prerequisites
 
 - Node.js (v18 or higher)
 - npm or yarn
-- Supabase account (free tier works)
+- MongoDB Atlas account (free tier available)
 - Git
 
 ## 🚀 Quick Start
@@ -85,32 +85,29 @@ npm install
 cd ..
 ```
 
-### 3. Set Up Supabase
+### 3. Set Up MongoDB Atlas
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Get your credentials:
-   - Project URL
-   - Anon key
-   - Database password
-3. Run the schema:
-   - Go to SQL Editor in Supabase
-   - Copy/paste `supabase-complete-schema.sql`
-   - Click Run
+1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a new cluster (M0 FREE tier)
+3. Create a database user (save username and password)
+4. Configure Network Access (allow from anywhere: 0.0.0.0/0)
+5. Get connection string:
+   - Click "Connect" on your cluster
+   - Choose "Connect your application"
+   - Copy the connection string
+   - Add database name: `mongodb+srv://user:pass@cluster.mongodb.net/grandhr?retryWrites=true&w=majority`
 
 ### 4. Configure Environment Variables
 
 **Frontend `.env` (in `frontend/` directory):**
 ```env
-VITE_SUPABASE_URL=https://xxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_API_URL=http://localhost:5000/api
 ```
 
 **Backend `.env` (in `backend/` directory):**
 ```env
-DATABASE_URL="postgresql://postgres.xxxxx:PASSWORD@aws-0-xx.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.xxxxx:PASSWORD@aws-0-xx.pooler.supabase.com:5432/postgres"
-JWT_SECRET="your-secret-key"
+DATABASE_URL="mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority"
+JWT_SECRET="your-secret-key-min-32-characters"
 JWT_EXPIRES_IN="7d"
 PORT=5000
 CORS_ORIGIN="http://localhost:3000"
@@ -142,7 +139,7 @@ Visit `http://localhost:3000`
 - **[Quick Start Guide](QUICK_START.md)** - 5-minute setup
 - **[Vercel Deployment](VERCEL_DEPLOYMENT.md)** - Production deployment guide
 - **[Quick Deploy](QUICK_DEPLOY.md)** - 10-minute deployment
-- **[Backend Setup](backend/SUPABASE_SETUP.md)** - Backend configuration
+- **[Backend Setup](backend/DATABASE_SETUP.md)** - Backend configuration
 - **[Integration Summary](INTEGRATION_SUMMARY.md)** - Feature overview
 
 ## 🏗️ Project Structure
@@ -180,30 +177,27 @@ grandhr/
 │   ├── package.json         # Backend dependencies
 │   └── vercel.json          # Backend Vercel config
 │
-├── supabase-complete-schema.sql  # Database schema
+├── backend/prisma/schema.prisma  # MongoDB Prisma schema
 └── README.md                # This file
 ```
 
 ## 🔐 Authentication
 
-GrandHR uses two authentication systems:
+GrandHR uses JWT-based authentication:
 
-1. **Supabase Auth** - For Hierarchy feature
-   - Login: `/login`
-   - Register: `/register`
-   - Data stored in Supabase
-
-2. **JWT Auth** - For HR Management
+1. **JWT Auth** - For HR Management features
    - Login: `/hr/login`
+   - Register: `/hr/company-onboarding`
    - Backend API authentication
    - Role-based access control
+   - Data stored in MongoDB
 
 ## 📱 Available Routes
 
 ### Public Routes
 - `/` - Landing page
-- `/login` - Supabase login
-- `/register` - Supabase registration
+- `/hr/login` - HR system login
+- `/hr/company-onboarding` - Company registration
 
 ### Document Routes (No auth required)
 - `/offer-letter` - Offer letter generator
@@ -213,7 +207,7 @@ GrandHR uses two authentication systems:
 - `/termination-letter` - Termination letter generator
 - `/salary-slip` - Salary slip generator
 
-### Protected Routes (Supabase Auth)
+### Public Routes (No auth required)
 - `/hierarchy` - Organizational hierarchy manager
 
 ### HR Management Routes (JWT Auth)
@@ -291,7 +285,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🙏 Acknowledgments
 
 - GrandHR - Complete HR management solution
-- [Supabase](https://supabase.com) - Backend infrastructure
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) - Cloud database
 - [React](https://reactjs.org) - UI framework
 - [Tailwind CSS](https://tailwindcss.com) - Styling
 

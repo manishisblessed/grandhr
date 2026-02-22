@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from './Layout';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { saveHierarchyToSupabase, loadHierarchyFromSupabase } from '../services/hierarchyService';
-import { useAuth } from '../contexts/AuthContext';
+// Hierarchy uses localStorage for data persistence
 
 const Hierarchy = () => {
   const [hierarchy, setHierarchy] = useState({
@@ -40,7 +39,6 @@ const Hierarchy = () => {
   const [editingHierarchyId, setEditingHierarchyId] = useState(null); // For renaming hierarchy
   const [editingHierarchyName, setEditingHierarchyName] = useState(''); // For renaming hierarchy
   const hierarchyTreeRef = useRef(null);
-  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -48,7 +46,7 @@ const Hierarchy = () => {
       window.html2canvas = html2canvas;
     }
     loadHierarchyData();
-  }, [isAuthenticated]);
+  }, []);
 
   // Close hierarchy modal when clicking outside
   useEffect(() => {
@@ -67,64 +65,8 @@ const Hierarchy = () => {
     setIsLoading(true);
     let hierarchiesLoaded = false;
     try {
-      // Try to load from Supabase first if authenticated
-      if (isAuthenticated) {
-        const supabaseData = await loadHierarchyFromSupabase();
-        if (supabaseData) {
-          // For Supabase, we'll still use the single hierarchy format for now
-          // TODO: Update Supabase service to support multiple hierarchies
-          
-          // Check if we have multiple hierarchies in localStorage
-          const storedHierarchies = localStorage.getItem('companyHierarchies');
-          if (storedHierarchies) {
-            const hierarchiesList = JSON.parse(storedHierarchies);
-            setHierarchies(hierarchiesList);
-            const storedCurrentId = localStorage.getItem('currentHierarchyId');
-            if (storedCurrentId) {
-              setCurrentHierarchyId(storedCurrentId);
-              const currentHierarchyData = hierarchiesList.find(h => h.id === storedCurrentId);
-              if (currentHierarchyData) {
-                ensureRootData(currentHierarchyData.hierarchy);
-                setHierarchy(currentHierarchyData.hierarchy);
-                setEmployees(new Map(currentHierarchyData.employees || []));
-                setCompanyName(currentHierarchyData.companyName || 'Abheepay');
-                setCompanyLogo(currentHierarchyData.companyLogo || null);
-                hierarchiesLoaded = true;
-              }
-            }
-          }
-          
-          if (!hierarchiesLoaded) {
-            // Create default hierarchy from Supabase data
-            const defaultHierarchy = {
-              id: `hierarchy-${Date.now()}`,
-              name: 'My Hierarchy',
-              hierarchy: supabaseData.hierarchy,
-              employees: Array.from(supabaseData.employees.entries()),
-              companyName: localStorage.getItem('hierarchyCompanyName') || 'Abheepay',
-              companyLogo: localStorage.getItem('hierarchyCompanyLogo') || null,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            ensureRootData(defaultHierarchy.hierarchy);
-            ensureRootData(defaultHierarchy.hierarchy);
-            setHierarchies([defaultHierarchy]);
-            setCurrentHierarchyId(defaultHierarchy.id);
-            setHierarchy(defaultHierarchy.hierarchy);
-          setEmployees(supabaseData.employees);
-            setCompanyName(defaultHierarchy.companyName);
-            setCompanyLogo(defaultHierarchy.companyLogo);
-            saveAllHierarchies([defaultHierarchy], defaultHierarchy.id);
-            hierarchiesLoaded = true;
-          }
-        } else {
-          // Fallback to localStorage
-          hierarchiesLoaded = loadHierarchyFromStorage();
-        }
-      } else {
-        // Not authenticated, use localStorage
-        hierarchiesLoaded = loadHierarchyFromStorage();
-      }
+      // Load from localStorage (MongoDB backend integration can be added later)
+      hierarchiesLoaded = loadHierarchyFromStorage();
 
       // If no hierarchies exist, create a default one
       if (!hierarchiesLoaded) {
@@ -564,19 +506,9 @@ const Hierarchy = () => {
       employees: Array.from(employeesData.entries())
     }));
 
-    // Also save to Supabase if authenticated
-    if (isAuthenticated) {
-      setSyncStatus('saving');
-      try {
-        await saveHierarchyToSupabase(hierarchyData, employeesData);
-        setSyncStatus('saved');
-        setTimeout(() => setSyncStatus('idle'), 2000);
-      } catch (error) {
-        console.error('Failed to save to Supabase:', error);
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      }
-    }
+    // Data saved to localStorage (MongoDB backend integration can be added later)
+    setSyncStatus('saved');
+    setTimeout(() => setSyncStatus('idle'), 2000);
   };
 
   const handleInputChange = (field, value) => {
