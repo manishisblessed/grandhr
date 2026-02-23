@@ -11,7 +11,7 @@
 5. **Database** → Connect → Get connection string
 6. **Modify connection string:**
    ```
-   mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
+   mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
    ```
    - Replace `USERNAME` and `PASSWORD`
    - Add `/grandhr` before `?` (database name)
@@ -23,7 +23,7 @@
 3. Select your repo → Add **backend** folder as service
 4. **Variables** tab → Add:
    ```env
-   DATABASE_URL=mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
+   DATABASE_URL=mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
    JWT_SECRET=generate-with-openssl-rand-base64-32
    JWT_EXPIRES_IN=7d
    NODE_ENV=production
@@ -60,7 +60,7 @@
 ## 📝 Required Environment Variables
 
 ```env
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
+DATABASE_URL=mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
 JWT_SECRET=your-secret-key-min-32-chars
 JWT_EXPIRES_IN=7d
 NODE_ENV=production

@@ -13,6 +13,8 @@ import AppointmentLetter from './components/AppointmentLetter';
 import IncrementLetter from './components/IncrementLetter';
 import RelievingLetter from './components/RelievingLetter';
 import TerminationLetter from './components/TerminationLetter';
+import WarningLetter from './components/WarningLetter';
+import ExperienceLetter from './components/ExperienceLetter';
 import Hierarchy from './components/Hierarchy';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -39,6 +41,11 @@ import About from './components/About';
 import Contact from './components/Contact';
 import EmployeeDashboard from './components/EmployeeDashboard';
 import NotificationsPage from './components/NotificationsPage';
+import SuperAdminDashboard from './components/SuperAdminDashboard';
+import ForgotPassword from './components/ForgotPassword';
+import ForgotUsername from './components/ForgotUsername';
+import ResetPassword from './components/ResetPassword';
+import WhatsAppWidget from './components/WhatsAppWidget';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -59,6 +66,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/hr/register" element={<HRRegister />} />
           <Route path="/hr/company-onboarding" element={<CompanyOnboarding />} />
           
+          {/* Password / Username Recovery */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-username" element={<ForgotUsername />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          
           {/* HR Management Routes - Full page without navbar/footer */}
           <Route path="/hr/dashboard" element={<HRDashboard />} />
           <Route path="/hr/employees" element={<Employees />} />
@@ -68,8 +80,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/hr/automation" element={<Automation />} />
           <Route path="/hr/support" element={<Support />} />
           <Route path="/hr/notifications" element={<NotificationsPage />} />
+
           {/* Employee Self-Service */}
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+
+          {/* GrandHR Super Admin Dashboard */}
+          <Route path="/super-admin" element={<SuperAdminDashboard />} />
           
           {/* App pages - with navbar */}
           <Route element={<AppLayout />}>
@@ -122,6 +138,22 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 </HRProtectedRoute>
               } 
             />
+            <Route 
+              path="/warning-letter" 
+              element={
+                <HRProtectedRoute>
+                  <WarningLetter />
+                </HRProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/experience-letter" 
+              element={
+                <HRProtectedRoute>
+                  <ExperienceLetter />
+                </HRProtectedRoute>
+              } 
+            />
             <Route
               path="/hierarchy"
               element={
@@ -142,10 +174,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="/resources" element={<Resources />} />
           </Route>
         </Routes>
+        
+        {/* Global WhatsApp Widget - visible on all pages */}
+        <WhatsAppWidget />
           </BrowserRouter>
         </NotificationProvider>
       </AuthProvider>
     </ToastProvider>
   </React.StrictMode>
 );
-

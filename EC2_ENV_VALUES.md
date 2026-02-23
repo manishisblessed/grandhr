@@ -25,12 +25,12 @@ DATABASE_URL="mongodb://localhost:27017/grandhr"
 4. Replace `<username>` and `<password>` with your DB user and password.
 5. **Add the database name** before the `?` (required for Prisma):
    ```text
-   mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
    ```
 
-**Example:**
+**Example (replace placeholders with your Atlas credentials — do not commit real values):**
 ```env
-DATABASE_URL="mongodb+srv://grandhruser:YourPassword@cluster0.abc123.mongodb.net/grandhr?retryWrites=true&w=majority"
+DATABASE_URL="mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority"
 ```
 
 **Important:** The path `/grandhr` (or your chosen DB name) is required. Without it the backend can fail.
@@ -108,8 +108,10 @@ NODE_ENV=production
 
 ## Full .env example (EC2, MongoDB)
 
+Use your real values only in the server `.env` file — never commit them.
+
 ```env
-DATABASE_URL="mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority"
+DATABASE_URL="mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority"
 JWT_SECRET="your-32-char-random-string-from-openssl-rand"
 JWT_EXPIRES_IN=7d
 PORT=5000

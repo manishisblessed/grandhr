@@ -67,8 +67,9 @@ const Navbar = () => {
             onClick={() => {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="flex items-center space-x-3 group"
+            className="flex items-center space-x-2 group"
           >
+            <img src="/logo.jpeg" alt="GrandHR" className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover shadow-md group-hover:shadow-lg transition-shadow" />
             <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-800 via-accent-600 to-purple-600 bg-clip-text text-transparent font-display transition-all duration-300 group-hover:scale-105">
               GrandHR
             </div>

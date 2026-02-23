@@ -325,7 +325,7 @@ fly status
 ### Required Variables
 
 ```env
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
+DATABASE_URL=mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
 JWT_SECRET=your-super-secret-jwt-key-min-32-characters
 JWT_EXPIRES_IN=7d
 NODE_ENV=production

@@ -15,7 +15,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "seed": "node seed-users.js",
+    "seed": "tsx prisma/seed.ts",
     "setup:enterprise": "tsx src/scripts/setup-enterprise.ts"
   },
   "dependencies": {

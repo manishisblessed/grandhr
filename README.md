@@ -94,8 +94,8 @@ cd ..
 5. Get connection string:
    - Click "Connect" on your cluster
    - Choose "Connect your application"
-   - Copy the connection string
-   - Add database name: `mongodb+srv://user:pass@cluster.mongodb.net/grandhr?retryWrites=true&w=majority`
+   - Copy the connection string and add database name before `?`: `/grandhr`
+   - Format: `mongodb+srv://<user>:<password>@cluster.mongodb.net/grandhr?retryWrites=true&w=majority` (use your Atlas credentials in `.env` only — do not commit them)
 
 ### 4. Configure Environment Variables
 
@@ -104,9 +104,9 @@ cd ..
 VITE_API_URL=http://localhost:5000/api
 ```
 
-**Backend `.env` (in `backend/` directory):**
+**Backend `.env` (in `backend/` directory):** Set `DATABASE_URL` to your MongoDB Atlas connection string (from Atlas → Connect → Drivers). Example format — replace placeholders and do not commit real values:
 ```env
-DATABASE_URL="mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority"
+DATABASE_URL="mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority"
 JWT_SECRET="your-secret-key-min-32-characters"
 JWT_EXPIRES_IN="7d"
 PORT=5000

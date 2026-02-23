@@ -5,6 +5,7 @@ import {
   getDocument,
   deleteDocument,
   getDocumentStats,
+  sendDocumentToEmail,
 } from '../controllers/generatedDocument.controller';
 import { authenticate } from '../middleware/auth.middleware';
 
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use(authenticate);
 
 router.post('/', saveDocument);
+router.post('/send-email', sendDocumentToEmail);
 router.get('/', getMyDocuments);
 router.get('/stats', getDocumentStats);
 router.get('/:id', getDocument);

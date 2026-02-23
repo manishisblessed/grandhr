@@ -1,18 +1,19 @@
 import nodemailer from 'nodemailer';
 
 /**
- * Email Utility
+ * Email Utility - All confirmations and system emails sent from noreply@grandhr.in
  * Made by Shah Works - www.shahworks.com
  */
 
+/** All transactional/confirmation emails use this sender. Set EMAIL_FROM in .env to override. */
+export const NOREPLY_FROM = process.env.EMAIL_FROM || 'noreply@grandhr.in';
+
 // Create reusable transporter
 const createTransporter = () => {
-  // Use environment variables for email configuration
-  // For production, configure these in .env file
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false, // true for 465, false for other ports
+    secure: false,
     auth: {
       user: process.env.SMTP_USER || process.env.EMAIL_USER,
       pass: process.env.SMTP_PASS || process.env.EMAIL_PASSWORD,
@@ -33,10 +34,8 @@ export const sendEmployeeWelcomeEmail = async (
 ) => {
   try {
     const transporter = createTransporter();
-    const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'noreply@grandhr.com';
-
     const mailOptions = {
-      from: `GrandHR <${fromEmail}>`,
+      from: `GrandHR <${NOREPLY_FROM}>`,
       to: employeeEmail,
       subject: 'Welcome to GrandHR - Your Account Credentials',
       html: `
@@ -136,10 +135,8 @@ export const sendEmail = async (
 ) => {
   try {
     const transporter = createTransporter();
-    const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'noreply@grandhr.com';
-
     const mailOptions = {
-      from: `GrandHR <${fromEmail}>`,
+      from: `GrandHR <${NOREPLY_FROM}>`,
       to,
       subject,
       html,
@@ -151,6 +148,45 @@ export const sendEmail = async (
     return { success: true, messageId: info.messageId };
   } catch (error: any) {
     console.error('Error sending email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Send a document (e.g. offer letter) to a candidate's email from noreply@grandhr.in
+ * Optionally attach a PDF.
+ */
+export const sendDocumentEmail = async (
+  to: string,
+  subject: string,
+  html: string,
+  pdfBase64?: string,
+  attachmentFilename: string = 'document.pdf'
+) => {
+  try {
+    const transporter = createTransporter();
+    const attachments: nodemailer.SendMailOptions['attachments'] = [];
+    if (pdfBase64) {
+      attachments.push({
+        filename: attachmentFilename,
+        content: Buffer.from(pdfBase64, 'base64'),
+      });
+    }
+
+    const mailOptions: nodemailer.SendMailOptions = {
+      from: `GrandHR <${NOREPLY_FROM}>`,
+      to,
+      subject,
+      html,
+      text: html.replace(/<[^>]*>/g, ''),
+      attachments: attachments.length ? attachments : undefined,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Document email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error('Error sending document email:', error);
     return { success: false, error: error.message };
   }
 };

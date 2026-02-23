@@ -68,9 +68,9 @@ npm run build
 nano .env
 ```
 
-Paste and update:
+Paste and update (use your Atlas credentials in place of the placeholders — do not commit real values):
 ```env
-DATABASE_URL=mongodb+srv://USERNAME:PASSWORD@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
+DATABASE_URL=mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
 JWT_SECRET=generate-with-openssl-rand-base64-32
 JWT_EXPIRES_IN=7d
 NODE_ENV=production

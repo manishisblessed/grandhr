@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
 import Layout from './Layout';
+import { COUNTRIES, STATES_BY_COUNTRY } from '../data/countriesAndStates';
 
 const CompanyOnboarding = () => {
   const [step, setStep] = useState(1);
@@ -37,12 +38,16 @@ const CompanyOnboarding = () => {
   });
 
   const handleChange = (e) => {
-    setCompanyData({
-      ...companyData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    const updates = { ...companyData, [name]: value };
+    if (name === 'country') {
+      updates.state = '';
+    }
+    setCompanyData(updates);
     setError('');
   };
+
+  const stateOptions = companyData.country ? (STATES_BY_COUNTRY[companyData.country] || null) : null;
 
   const validateStep = (stepNum) => {
     setError('');
@@ -329,15 +334,44 @@ const CompanyOnboarding = () => {
                 </div>
 
                 <div>
-                  <label className="form-label">State/Province</label>
-                  <input
-                    type="text"
-                    name="state"
+                  <label className="form-label">Country</label>
+                  <select
+                    name="country"
                     className="form-input"
-                    value={companyData.state}
+                    value={companyData.country}
                     onChange={handleChange}
-                    placeholder="NY"
-                  />
+                  >
+                    <option value="">Select country</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="form-label">State/Province</label>
+                  {stateOptions ? (
+                    <select
+                      name="state"
+                      className="form-input"
+                      value={companyData.state}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select state/province</option>
+                      {stateOptions.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      name="state"
+                      className="form-input"
+                      value={companyData.state}
+                      onChange={handleChange}
+                      placeholder="State or province"
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -349,18 +383,6 @@ const CompanyOnboarding = () => {
                     value={companyData.zipCode}
                     onChange={handleChange}
                     placeholder="10001"
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label">Country</label>
-                  <input
-                    type="text"
-                    name="country"
-                    className="form-input"
-                    value={companyData.country}
-                    onChange={handleChange}
-                    placeholder="United States"
                   />
                 </div>
 

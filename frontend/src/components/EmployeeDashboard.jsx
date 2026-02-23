@@ -13,6 +13,7 @@ const EmployeeDashboard = () => {
   });
   const [recentLeaves, setRecentLeaves] = useState([]);
   const [recentAttendance, setRecentAttendance] = useState([]);
+  const [myDocuments, setMyDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showError } = useToast();
   const navigate = useNavigate();
@@ -63,6 +64,14 @@ const EmployeeDashboard = () => {
         setStats(prev => ({ ...prev, pendingLeaves: pendingCount }));
       } catch (e) {
         console.log('Leaves not available');
+      }
+
+      // Fetch my documents
+      try {
+        const docsRes = await api.get('/generated-documents/my-documents');
+        setMyDocuments((docsRes.data.documents || docsRes.data || []).slice(0, 6));
+      } catch (e) {
+        console.log('Documents not available');
       }
 
       // Fetch recent attendance
@@ -197,7 +206,7 @@ const EmployeeDashboard = () => {
         {/* Quick Actions */}
         <div className="card p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <Link
               to="/hr/attendance"
               className="flex flex-col items-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl hover:shadow-md transition-all group"
@@ -236,6 +245,16 @@ const EmployeeDashboard = () => {
                 💬
               </div>
               <span className="text-sm font-medium text-gray-700">Get Help</span>
+            </Link>
+
+            <Link
+              to="/hr/notifications"
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-rose-50 to-red-50 rounded-xl hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-rose-500 rounded-full flex items-center justify-center text-white text-xl mb-2 group-hover:scale-110 transition-transform">
+                🔔
+              </div>
+              <span className="text-sm font-medium text-gray-700">Notices</span>
             </Link>
           </div>
         </div>
@@ -302,6 +321,32 @@ const EmployeeDashboard = () => {
               <p className="text-gray-500 text-center py-8">No recent attendance records</p>
             )}
           </div>
+        </div>
+
+        {/* My Documents */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">My Documents</h3>
+          </div>
+          {myDocuments.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {myDocuments.map((doc) => (
+                <div key={doc.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="w-10 h-10 bg-accent-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 text-sm truncate">{doc.title}</p>
+                    <p className="text-xs text-gray-500">{doc.documentType?.replace(/_/g, ' ')} • {new Date(doc.createdAt).toLocaleDateString('en-IN')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-6">No documents available yet</p>
+          )}
         </div>
 
         {/* Profile Summary */}

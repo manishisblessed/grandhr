@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { DocumentStorageService } from '../services/documentStorage.service';
+import { sendDocumentEmail } from '../utils/email.util';
 import { z } from 'zod';
 
 const saveDocumentSchema = z.object({
@@ -122,6 +123,52 @@ export const getDocumentStats = async (req: AuthRequest, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       message: error.message || 'Failed to fetch document stats',
+    });
+  }
+};
+
+const sendDocumentToEmailSchema = z.object({
+  toEmail: z.string().email('Valid recipient email required'),
+  subject: z.string().min(1, 'Subject required'),
+  htmlContent: z.string().min(1, 'Email content required'),
+  pdfBase64: z.string().optional(),
+  attachmentFilename: z.string().optional(),
+});
+
+/**
+ * Send a document (e.g. offer letter) to a candidate's email from noreply@grandhr.in
+ */
+export const sendDocumentToEmail = async (req: AuthRequest, res: Response) => {
+  try {
+    const data = sendDocumentToEmailSchema.parse(req.body);
+
+    const result = await sendDocumentEmail(
+      data.toEmail,
+      data.subject,
+      data.htmlContent,
+      data.pdfBase64,
+      data.attachmentFilename || 'offer-letter.pdf'
+    );
+
+    if (!result.success) {
+      return res.status(500).json({
+        message: result.error || 'Failed to send email',
+      });
+    }
+
+    res.json({
+      message: 'Email sent successfully to ' + data.toEmail,
+      success: true,
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message: 'Validation error',
+        errors: error.errors,
+      });
+    }
+    res.status(500).json({
+      message: error.message || 'Failed to send email',
     });
   }
 };

@@ -3,6 +3,8 @@ import Layout from './Layout';
 import { formatDate, formatCurrency } from '../utils/pdfUtils';
 import { jsPDF } from 'jspdf';
 import { saveDocument, pdfBlobToBase64 } from '../utils/documentSaver';
+import api from '../utils/api';
+import { useToast } from '../contexts/ToastContext';
 
 const OfferLetter = () => {
   const [companies, setCompanies] = useState([]);
@@ -11,6 +13,9 @@ const OfferLetter = () => {
   const [showCompanyManager, setShowCompanyManager] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
+  const [emailTo, setEmailTo] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState({
     company: {
@@ -371,6 +376,38 @@ const OfferLetter = () => {
     }
   };
 
+  const handleEmailOfferLetter = async () => {
+    const recipientEmail = emailTo.trim() || formData.candidate.email?.trim();
+    if (!recipientEmail) {
+      showError('Please enter the candidate\'s email address');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      showError('Please enter a valid email address');
+      return;
+    }
+    const data = { ...formData, company: currentCompany || formData.company };
+    if (!data.candidate.name || !data.job.position) {
+      showError('Please fill in candidate name and position before sending');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const htmlContent = generateOfferLetterHTML(data);
+      const subject = `Offer Letter - ${data.job.position} - ${data.company.name || 'Company'}`;
+      await api.post('/generated-documents/send-email', {
+        toEmail: recipientEmail,
+        subject,
+        htmlContent,
+      });
+      showSuccess(`Offer letter sent to ${recipientEmail} from noreply@grandhr.in`);
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const clearForm = () => {
     if (confirm('Are you sure you want to clear all form data?')) {
       setFormData({
@@ -389,6 +426,7 @@ const OfferLetter = () => {
         job: { ...prev.job, joiningDate: futureDate.toISOString().split('T')[0] }
       }));
       setPreviewVisible(false);
+      setEmailTo('');
     }
   };
 
@@ -754,6 +792,26 @@ const OfferLetter = () => {
                 className="preview-content bg-white p-6 rounded-lg border-2 border-gray-200 max-h-[calc(100vh-200px)] overflow-y-auto"
                 dangerouslySetInnerHTML={{ __html: previewContent }}
               />
+              <div className="border-t border-gray-200 pt-4 mt-4 space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Email offer letter to candidate (from noreply@grandhr.in)</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    className="form-input flex-1"
+                    placeholder="candidate@example.com"
+                    value={emailTo || formData.candidate.email || ''}
+                    onChange={(e) => setEmailTo(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary whitespace-nowrap px-6 disabled:opacity-50"
+                    onClick={handleEmailOfferLetter}
+                    disabled={sendingEmail}
+                  >
+                    {sendingEmail ? 'Sending…' : 'Send to email'}
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
                 <button type="button" className="btn-primary flex-1" onClick={downloadPDF}>
                   Download PDF

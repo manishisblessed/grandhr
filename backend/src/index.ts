@@ -21,6 +21,7 @@ import generatedDocumentRoutes from './routes/generatedDocument.routes';
 import companyRoutes from './routes/company.routes';
 import pricingRoutes from './routes/pricing.routes';
 import notificationRoutes from './routes/notification.routes';
+import superAdminRoutes from './routes/superAdmin.routes';
 
 // Middleware
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware';
@@ -89,6 +90,7 @@ app.use('/api/generated-documents', generatedDocumentRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/super-admin', superAdminRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

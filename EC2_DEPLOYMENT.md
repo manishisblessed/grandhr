@@ -257,7 +257,7 @@ Paste the following and update with your values:
 
 ```env
 # MongoDB Atlas Connection
-DATABASE_URL=mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
+DATABASE_URL=mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster0.xxxxx.mongodb.net/grandhr?retryWrites=true&w=majority
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters-long
@@ -648,7 +648,7 @@ sudo tail -f /var/log/nginx/error.log
 Required variables in `~/grandhr/backend/.env`:
 
 ```env
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
+DATABASE_URL=mongodb+srv://<YOUR_ATLAS_USER>:<YOUR_ATLAS_PASSWORD>@cluster.mongodb.net/grandhr?retryWrites=true&w=majority
 JWT_SECRET=your-secret-key-min-32-characters
 JWT_EXPIRES_IN=7d
 NODE_ENV=production
