@@ -1199,9 +1199,9 @@ const SuperAdminDashboard = () => {
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <img src="/logo.jpeg" alt="GrandHR" className="w-10 h-10 rounded-lg" />
+            <img src="/logo.png" alt="GrandHR" className="w-10 h-10 object-contain" />
             <div>
-              <h1 className="text-base font-bold tracking-tight">GrandHR</h1>
+              <h1 className="text-base font-bold tracking-tight"><span className="text-blue-400">Grand</span><span className="text-green-400">HR</span></h1>
               <p className="text-[11px] text-slate-400 font-medium">Super Admin Panel</p>
             </div>
           </div>

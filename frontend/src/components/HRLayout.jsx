@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import logoImg from '../assets/logo.png';
 
 // Sidebar Navigation Component
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -84,12 +85,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         {/* Logo - Fixed at top */}
         <div className="flex-shrink-0 p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <Link to="/hr/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-lg">
-                G
-              </div>
+            <Link to="/hr/dashboard" className="flex items-center gap-2.5">
+              <img src={logoImg} alt="GrandHR" className="w-10 h-10 object-contain" />
               <div>
-                <h1 className="text-lg font-bold">GrandHR</h1>
+                <h1 className="text-lg font-bold">
+                  <span className="text-blue-400">Grand</span><span className="text-green-400">HR</span>
+                </h1>
                 <p className="text-[10px] text-slate-400">Enterprise Suite</p>
               </div>
             </Link>

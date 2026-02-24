@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logoImg from '../assets/logo.png';
 
 const Footer = () => {
   return (
@@ -8,11 +9,11 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <img src="/logo.jpeg" alt="GrandHR" className="w-10 h-10 rounded-lg object-cover" />
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-accent-500 to-accent-700 bg-clip-text text-transparent">
-                GrandHR
-              </h3>
+            <div className="flex items-center gap-2.5 mb-4">
+              <img src={logoImg} alt="GrandHR" className="h-10 object-contain" />
+              <span className="text-xl font-bold font-display">
+                <span className="text-blue-400">Grand</span><span className="text-green-400">HR</span>
+              </span>
             </div>
             <p className="text-gray-400 text-sm mb-4">
               Complete HR management solution for MNCs and growing businesses. 
@@ -155,8 +156,8 @@ const Footer = () => {
         </div>
 
         {/* Copyright & Made by Shah Works */}
-        <div className="border-t border-slate-800 mt-8 pt-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="border-t border-slate-800 mt-8 pt-6 pb-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pr-20">
             <p className="text-sm text-gray-500">
               &copy; {new Date().getFullYear()} GrandHR. All rights reserved.
             </p>

@@ -1,0 +1,44 @@
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { useAuthStore } from '../store/useAuthStore';
+import { useNotificationStore } from '../store/useNotificationStore';
+import { ADMIN_ROLES } from '../constants/config';
+import AuthNavigator from './AuthNavigator';
+import AdminTabNavigator from './AdminTabNavigator';
+import EmployeeTabNavigator from './EmployeeTabNavigator';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+
+export default function AppNavigator() {
+  const { user, isAuthenticated, isInitialized, initialize } = useAuthStore();
+  const fetchNotifications = useNotificationStore((s) => s.fetch);
+
+  useEffect(() => {
+    initialize();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  if (!isInitialized) {
+    return <LoadingSpinner message="Loading..." />;
+  }
+
+  const isAdmin = user?.role && ADMIN_ROLES.includes(user.role);
+
+  return (
+    <NavigationContainer>
+      {!isAuthenticated ? (
+        <AuthNavigator />
+      ) : isAdmin ? (
+        <AdminTabNavigator />
+      ) : (
+        <EmployeeTabNavigator />
+      )}
+    </NavigationContainer>
+  );
+}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-// Auth context removed - using HR JWT auth only
 import NotificationBell from './NotificationBell';
+import logoImg from '../assets/logo.png';
 
 const Navbar = () => {
   const location = useLocation();
@@ -15,10 +15,10 @@ const Navbar = () => {
 
   // Public navigation items - Professional HR platform navigation
   const publicMenuItems = [
-    { name: 'Solutions', path: '/solutions', icon: '💼', isAnchor: false },
+    { name: 'Home', path: '/', icon: '🏠', isAnchor: false },
+    { name: 'About', path: '/about', icon: 'ℹ️', isAnchor: false },
     { name: 'Features', path: '/features', icon: '⭐', isAnchor: false },
     { name: 'Pricing', path: '/pricing', icon: '💰', isAnchor: false },
-    { name: 'About', path: '/about', icon: 'ℹ️', isAnchor: false },
     { name: 'Contact', path: '/contact', icon: '📞', isAnchor: false },
   ];
 
@@ -45,13 +45,8 @@ const Navbar = () => {
     ]
   ) : [];
 
-  // Hierarchy menu item (available to all users)
-  const hierarchyMenuItems = [
-    { name: 'Hierarchy', path: '/hierarchy', icon: '🏢' },
-  ];
-
   // Combine menu items based on auth status
-  const menuItems = isHRLoggedIn ? hrMenuItems : [...publicMenuItems, ...hierarchyMenuItems];
+  const menuItems = isHRLoggedIn ? hrMenuItems : publicMenuItems;
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -69,12 +64,9 @@ const Navbar = () => {
             }}
             className="flex items-center space-x-2 group"
           >
-            <img src="/logo.jpeg" alt="GrandHR" className="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover shadow-md group-hover:shadow-lg transition-shadow" />
-            <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-800 via-accent-600 to-purple-600 bg-clip-text text-transparent font-display transition-all duration-300 group-hover:scale-105">
-              GrandHR
-            </div>
-            <span className="hidden sm:inline-block px-2 py-1 bg-gradient-to-r from-accent-100 to-purple-100 text-accent-700 text-xs font-semibold rounded-full">
-              Enterprise
+            <img src={logoImg} alt="GrandHR" className="h-9 md:h-11 object-contain group-hover:scale-105 transition-all duration-300" />
+            <span className="text-xl md:text-2xl font-bold font-display">
+              <span className="text-blue-600">Grand</span><span className="text-green-600">HR</span>
             </span>
           </Link>
 

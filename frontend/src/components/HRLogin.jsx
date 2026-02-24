@@ -123,8 +123,8 @@ const HRLogin = () => {
             <div className="text-center text-sm text-gray-600 space-y-2 mt-4">
               <p>
                 Don't have an account?{' '}
-                <Link to="/hr/register" className="text-accent-600 hover:text-accent-700 font-semibold">
-                  Register as Employee
+                <Link to="/hr/company-onboarding" className="text-accent-600 hover:text-accent-700 font-semibold">
+                  Register your Company
                 </Link>
               </p>
               <p>

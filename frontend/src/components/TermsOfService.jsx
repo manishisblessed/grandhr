@@ -145,10 +145,11 @@ const TermsOfService = () => {
                 </p>
                 <div className="bg-gray-50 rounded-lg p-6 mt-4">
                   <p className="text-gray-700">
-                    <strong>Email:</strong> legal@grandhr.com<br />
+                    <strong>Email:</strong> support@grandhr.in<br />
                     <strong>Phone:</strong> +91 9090702707<br />
-                    <strong>Address:</strong> GrandHR Legal Department<br />
-                    123 Business Street, New York, NY 10001
+                    <strong>WhatsApp:</strong> +91 9090702707<br />
+                    <strong>Address:</strong> E-Block, Shiv Ram Park,<br />
+                    Nangloi, New Delhi-110041, India
                   </p>
                 </div>
               </section>
