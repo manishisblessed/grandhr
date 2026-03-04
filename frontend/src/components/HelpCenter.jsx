@@ -171,7 +171,7 @@ const HelpCenter = () => {
                 Contact Support
               </Link>
               <a
-                href="https://wa.me/919090702707"
+                href="https://wa.me/919090702705"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-xl"

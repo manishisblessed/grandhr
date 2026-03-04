@@ -39,7 +39,7 @@ const Resources = () => {
       items: [
         { title: 'Help Center', description: 'FAQs and troubleshooting', link: '/help-center' },
         { title: 'Contact Support', description: 'Get in touch with our team', link: '/#contact' },
-        { title: 'WhatsApp Support', description: 'Chat with us on WhatsApp', link: 'https://wa.me/919090702707', external: true },
+        { title: 'WhatsApp Support', description: 'Chat with us on WhatsApp', link: 'https://wa.me/919090702705', external: true },
         { title: 'Community Forum', description: 'Connect with other users', link: '/forum' }
       ]
     },

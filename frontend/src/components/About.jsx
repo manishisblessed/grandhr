@@ -191,8 +191,8 @@ const About = () => {
             <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
               {[
                 { icon: '📧', label: 'Email', value: 'support@grandhr.in', href: 'mailto:support@grandhr.in' },
-                { icon: '📞', label: 'Phone', value: '+91 9090702707', href: 'tel:+919090702707' },
-                { icon: '💬', label: 'WhatsApp', value: '+91 9090702707', href: 'https://wa.me/919090702707' },
+                { icon: '📞', label: 'Phone', value: '+91-9090702705', href: 'tel:+919090702705' },
+                { icon: '💬', label: 'WhatsApp', value: '+91-9090702705', href: 'https://wa.me/919090702705' },
                 { icon: '📍', label: 'Address', value: 'E-Block, Shiv Ram Park, Nangloi, New Delhi-110041', href: null },
               ].map((item, idx) => (
                 <div key={idx} className="scroll-reveal opacity-0 translate-y-6 transition-all duration-700 bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:bg-white/20 transition-colors" style={{ transitionDelay: `${idx * 100}ms` }}>

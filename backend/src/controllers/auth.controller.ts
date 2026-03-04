@@ -336,7 +336,7 @@ export const resetPassword = async (req: Request, res: Response) => {
               <p>Your GrandHR account password has been changed successfully.</p>
               <p>If you did not make this change, please take immediate action:</p>
               <div class="alert">
-                Contact us immediately at <strong>support@grandhr.in</strong> or call <strong>+91 9090702707</strong> if you did not authorize this change.
+                Contact us immediately at <strong>support@grandhr.in</strong> or call <strong>+91-9090702705</strong> if you did not authorize this change.
               </div>
             </div>
             <div class="footer">

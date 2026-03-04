@@ -55,18 +55,18 @@ const Contact = () => {
                 <h3 className="text-2xl font-bold text-gray-800 mb-3">Contact Us</h3>
                 <p className="text-gray-600 mb-4">Reach out to our team</p>
                 <a 
-                  href="tel:+919090702707"
+                  href="tel:+919090702705"
                   className="text-accent-600 hover:text-accent-700 font-semibold block mb-2"
                 >
-                  +91 9090702707
+                  +91-9090702705
                 </a>
                 <a 
-                  href="https://wa.me/919090702707"
+                  href="https://wa.me/919090702705"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-green-600 hover:text-green-700 font-semibold"
                 >
-                  WhatsApp: +91 9090702707
+                  WhatsApp: +91-9090702705
                 </a>
               </div>
             </div>

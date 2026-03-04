@@ -116,7 +116,7 @@ export const processPayment = async (paymentData, onSuccess, onError) => {
       description: `${paymentData.planName} Subscription`,
       prefill: {
         email: hrUser.email || company.email || '',
-        contact: '9090702707',
+        contact: '9090702705',
         name: company.name || 'Customer'
       },
       onSuccess: async (response) => {
