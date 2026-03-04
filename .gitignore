@@ -52,6 +52,7 @@ coverage/
 # PDF outputs
 *.pdf
 *.png
+!mobile-app/assets/*.png
 !LOGO.jpg
 
 # Database
