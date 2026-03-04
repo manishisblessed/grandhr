@@ -130,7 +130,7 @@ const Pricing = () => {
       currency: currency.code === 'INR' ? 'INR' : 'USD',
       name: 'GrandHR',
       description: `${summary.plan.name} Plan - ${employeeCount} employees (${billingPeriod === 'MONTHLY' ? 'Monthly' : 'Yearly'})`,
-      image: '/logo.png',
+      image: '/logo.jpeg',
       handler: function (response) {
         alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
       },

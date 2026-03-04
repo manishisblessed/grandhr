@@ -10,6 +10,15 @@ export const AuthService = {
   login: (email: string, password: string) =>
     api.post<LoginResponse>('/auth/login', { email, password }),
 
+  register: (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    employeeId?: string;
+    role: string;
+  }) => api.post<LoginResponse>('/auth/register', data),
+
   getProfile: () => api.get<User>('/auth/profile'),
 
   logout: () => api.post('/auth/logout').catch(() => {}),

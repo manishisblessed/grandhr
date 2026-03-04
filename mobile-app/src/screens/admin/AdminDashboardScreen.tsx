@@ -89,31 +89,17 @@ export default function AdminDashboardScreen() {
 
       <Text style={styles.sectionTitle}>Quick Actions</Text>
       <Card>
-        <View style={styles.actionsRow}>
-          <QuickAction
-            title="Employees"
-            icon="people-outline"
-            color={Colors.primary}
-            onPress={() => navigation.navigate('AdminEmployees')}
-          />
-          <QuickAction
-            title="Leave Requests"
-            icon="document-text-outline"
-            color={Colors.warning}
-            onPress={() => navigation.navigate('AdminLeaves')}
-          />
-          <QuickAction
-            title="Attendance"
-            icon="time-outline"
-            color={Colors.success}
-            onPress={() => navigation.navigate('Attendance')}
-          />
-          <QuickAction
-            title="Notifications"
-            icon="notifications-outline"
-            color={Colors.info}
-            onPress={() => navigation.navigate('Notifications')}
-          />
+        <View style={styles.actionsGrid}>
+          <QuickAction title="Employees" icon="people-outline" color={Colors.primary} onPress={() => navigation.navigate('AdminEmployees')} />
+          <QuickAction title="Leave Requests" icon="document-text-outline" color={Colors.warning} onPress={() => navigation.navigate('AdminLeaves')} />
+          <QuickAction title="Attendance" icon="time-outline" color={Colors.success} onPress={() => navigation.navigate('Attendance')} />
+          <QuickAction title="Notifications" icon="notifications-outline" color={Colors.info} onPress={() => navigation.navigate('Notifications')} />
+        </View>
+        <View style={styles.actionsGrid}>
+          <QuickAction title="Automation" icon="cog-outline" color={Colors.secondary} onPress={() => navigation.navigate('Automation')} />
+          <QuickAction title="Support" icon="chatbubbles-outline" color="#E11D48" onPress={() => navigation.navigate('Support')} />
+          <QuickAction title="HR Bot" icon="chatbubble-ellipses-outline" color="#8B5CF6" onPress={() => navigation.navigate('Chatbot')} />
+          <QuickAction title="" icon="ellipse-outline" color="transparent" onPress={() => {}} />
         </View>
       </Card>
     </ScrollView>
@@ -141,5 +127,5 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: Spacing.md,
   },
-  actionsRow: { flexDirection: 'row', justifyContent: 'space-around' },
+  actionsGrid: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: Spacing.md },
 });

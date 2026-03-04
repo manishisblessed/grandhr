@@ -181,30 +181,16 @@ export default function EmployeeDashboardScreen() {
       <Text style={styles.sectionTitle}>Quick Actions</Text>
       <Card>
         <View style={styles.actionsGrid}>
-          <QuickAction
-            title="Apply Leave"
-            icon="add-circle-outline"
-            color={Colors.primary}
-            onPress={() => navigation.navigate('LeaveApply')}
-          />
-          <QuickAction
-            title="Leave Status"
-            icon="list-outline"
-            color={Colors.secondary}
-            onPress={() => navigation.navigate('LeaveStatus')}
-          />
-          <QuickAction
-            title="Attendance"
-            icon="time-outline"
-            color={Colors.success}
-            onPress={() => navigation.navigate('Attendance')}
-          />
-          <QuickAction
-            title="Salary Slips"
-            icon="wallet-outline"
-            color={Colors.warning}
-            onPress={() => navigation.navigate('SalarySlip')}
-          />
+          <QuickAction title="Apply Leave" icon="add-circle-outline" color={Colors.primary} onPress={() => navigation.navigate('LeaveApply')} />
+          <QuickAction title="Leave Status" icon="list-outline" color={Colors.secondary} onPress={() => navigation.navigate('LeaveStatus')} />
+          <QuickAction title="Attendance" icon="time-outline" color={Colors.success} onPress={() => navigation.navigate('Attendance')} />
+          <QuickAction title="Salary Slips" icon="wallet-outline" color={Colors.warning} onPress={() => navigation.navigate('SalarySlip')} />
+        </View>
+        <View style={styles.actionsGrid}>
+          <QuickAction title="Documents" icon="document-outline" color={Colors.info} onPress={() => navigation.navigate('Documents')} />
+          <QuickAction title="Support" icon="chatbubbles-outline" color="#E11D48" onPress={() => navigation.navigate('Support')} />
+          <QuickAction title="HR Bot" icon="chatbubble-ellipses-outline" color="#8B5CF6" onPress={() => navigation.navigate('Chatbot')} />
+          <QuickAction title="Notifications" icon="notifications-outline" color="#F59E0B" onPress={() => navigation.navigate('Notifications')} />
         </View>
       </Card>
 
@@ -311,6 +297,7 @@ const styles = StyleSheet.create({
   actionsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: Spacing.md,
   },
   leaveItem: { marginBottom: Spacing.sm },
   leaveRow: {

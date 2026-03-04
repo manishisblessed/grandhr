@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo.jpeg';
 
 const Navbar = () => {
   const location = useLocation();

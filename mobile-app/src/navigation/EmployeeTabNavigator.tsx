@@ -8,13 +8,17 @@ import LeaveApplyScreen from '../screens/employee/LeaveApplyScreen';
 import LeaveStatusScreen from '../screens/employee/LeaveStatusScreen';
 import SalarySlipScreen from '../screens/employee/SalarySlipScreen';
 import ProfileScreen from '../screens/employee/ProfileScreen';
+import DocumentsScreen from '../screens/employee/DocumentsScreen';
 import NotificationsScreen from '../screens/common/NotificationsScreen';
+import SupportScreen from '../screens/common/SupportScreen';
+import ChatbotScreen from '../screens/common/ChatbotScreen';
+import SettingsScreen from '../screens/common/SettingsScreen';
 import { Colors, FontSize } from '../constants/theme';
-import { useNotificationStore } from '../store/useNotificationStore';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 const LeaveStack = createNativeStackNavigator();
+const MoreStack = createNativeStackNavigator();
 
 const screenOptions = {
   headerStyle: { backgroundColor: Colors.surface },
@@ -26,36 +30,15 @@ const screenOptions = {
 function HomeStackNavigator() {
   return (
     <HomeStack.Navigator screenOptions={screenOptions}>
-      <HomeStack.Screen
-        name="EmployeeDashboard"
-        component={EmployeeDashboardScreen}
-        options={{ title: 'Dashboard' }}
-      />
-      <HomeStack.Screen
-        name="Attendance"
-        component={AttendanceScreen}
-        options={{ title: 'Attendance' }}
-      />
-      <HomeStack.Screen
-        name="LeaveApply"
-        component={LeaveApplyScreen}
-        options={{ title: 'Apply Leave' }}
-      />
-      <HomeStack.Screen
-        name="LeaveStatus"
-        component={LeaveStatusScreen}
-        options={{ title: 'Leave Status' }}
-      />
-      <HomeStack.Screen
-        name="SalarySlip"
-        component={SalarySlipScreen}
-        options={{ title: 'Salary Slips' }}
-      />
-      <HomeStack.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ title: 'Notifications' }}
-      />
+      <HomeStack.Screen name="EmployeeDashboard" component={EmployeeDashboardScreen} options={{ title: 'Dashboard' }} />
+      <HomeStack.Screen name="Attendance" component={AttendanceScreen} options={{ title: 'Attendance' }} />
+      <HomeStack.Screen name="LeaveApply" component={LeaveApplyScreen} options={{ title: 'Apply Leave' }} />
+      <HomeStack.Screen name="LeaveStatus" component={LeaveStatusScreen} options={{ title: 'Leave Status' }} />
+      <HomeStack.Screen name="SalarySlip" component={SalarySlipScreen} options={{ title: 'Salary Slips' }} />
+      <HomeStack.Screen name="Documents" component={DocumentsScreen} options={{ title: 'My Documents' }} />
+      <HomeStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+      <HomeStack.Screen name="Support" component={SupportScreen} options={{ title: 'Support' }} />
+      <HomeStack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'HR Assistant' }} />
     </HomeStack.Navigator>
   );
 }
@@ -63,23 +46,24 @@ function HomeStackNavigator() {
 function LeaveStackNavigator() {
   return (
     <LeaveStack.Navigator screenOptions={screenOptions}>
-      <LeaveStack.Screen
-        name="LeaveStatusMain"
-        component={LeaveStatusScreen}
-        options={{ title: 'My Leaves' }}
-      />
-      <LeaveStack.Screen
-        name="LeaveApply"
-        component={LeaveApplyScreen}
-        options={{ title: 'Apply Leave' }}
-      />
+      <LeaveStack.Screen name="LeaveStatusMain" component={LeaveStatusScreen} options={{ title: 'My Leaves' }} />
+      <LeaveStack.Screen name="LeaveApply" component={LeaveApplyScreen} options={{ title: 'Apply Leave' }} />
     </LeaveStack.Navigator>
   );
 }
 
-export default function EmployeeTabNavigator() {
-  const unreadCount = useNotificationStore((s) => s.unreadCount);
+function MoreStackNavigator() {
+  return (
+    <MoreStack.Navigator screenOptions={screenOptions}>
+      <MoreStack.Screen name="SettingsMain" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <MoreStack.Screen name="Support" component={SupportScreen} options={{ title: 'Support' }} />
+      <MoreStack.Screen name="Documents" component={DocumentsScreen} options={{ title: 'My Documents' }} />
+      <MoreStack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'HR Assistant' }} />
+    </MoreStack.Navigator>
+  );
+}
 
+export default function EmployeeTabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -98,37 +82,17 @@ export default function EmployeeTabNavigator() {
             Leaves: 'calendar-outline',
             Salary: 'wallet-outline',
             Profile: 'person-outline',
+            More: 'menu-outline',
           };
-          return (
-            <Ionicons
-              name={icons[route.name] || 'ellipse-outline'}
-              size={size}
-              color={color}
-            />
-          );
+          return <Ionicons name={icons[route.name] || 'ellipse-outline'} size={size} color={color} />;
         },
       })}
     >
       <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Leaves" component={LeaveStackNavigator} />
-      <Tab.Screen
-        name="Salary"
-        component={SalarySlipScreen}
-        options={{
-          ...screenOptions,
-          headerShown: true,
-          title: 'Salary Slips',
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          ...screenOptions,
-          headerShown: true,
-          title: 'My Profile',
-        }}
-      />
+      <Tab.Screen name="Salary" component={SalarySlipScreen} options={{ ...screenOptions, headerShown: true, title: 'Salary Slips' }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ ...screenOptions, headerShown: true, title: 'My Profile' }} />
+      <Tab.Screen name="More" component={MoreStackNavigator} />
     </Tab.Navigator>
   );
 }

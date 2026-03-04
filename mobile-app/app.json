@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#4F46E5"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.grandhr.mobile"
@@ -24,7 +26,10 @@
       "package": "com.grandhr.mobile"
     },
     "extra": {
-      "apiUrl": "http://localhost:5000/api"
-    }
+      "apiUrl": "https://api.grandhr.in/api"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

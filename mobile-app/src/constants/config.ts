@@ -1,18 +1,59 @@
-import Constants from 'expo-constants';
-
-export const API_BASE_URL =
-  Constants.expoConfig?.extra?.apiUrl || 'http://localhost:5000/api';
+export const API_BASE_URL = 'http://192.168.1.8:5000/api';
 
 export const TOKEN_KEY = 'grandhr_token';
 export const USER_KEY = 'grandhr_user';
 
 export const LEAVE_TYPES = [
-  { label: 'Sick Leave', value: 'SICK' },
-  { label: 'Casual Leave', value: 'CASUAL' },
-  { label: 'Earned Leave', value: 'EARNED' },
-  { label: 'Maternity Leave', value: 'MATERNITY' },
-  { label: 'Paternity Leave', value: 'PATERNITY' },
-  { label: 'Unpaid Leave', value: 'UNPAID' },
+  { label: 'Casual Leave', value: 'CASUAL_LEAVE' },
+  { label: 'Sick Leave', value: 'SICK_LEAVE' },
+  { label: 'Earned Leave', value: 'EARNED_LEAVE' },
+  { label: 'Maternity Leave', value: 'MATERNITY_LEAVE' },
+  { label: 'Paternity Leave', value: 'PATERNITY_LEAVE' },
+  { label: 'Comp Off', value: 'COMP_OFF' },
+  { label: 'Loss of Pay', value: 'LOP' },
+] as const;
+
+export const TICKET_CATEGORIES = [
+  { label: 'Technical', value: 'TECHNICAL' },
+  { label: 'Billing', value: 'BILLING' },
+  { label: 'Feature Request', value: 'FEATURE_REQUEST' },
+  { label: 'Bug', value: 'BUG' },
+  { label: 'Other', value: 'OTHER' },
+] as const;
+
+export const TICKET_PRIORITIES = [
+  { label: 'Low', value: 'LOW' },
+  { label: 'Medium', value: 'MEDIUM' },
+  { label: 'High', value: 'HIGH' },
+  { label: 'Urgent', value: 'URGENT' },
+] as const;
+
+export const TICKET_STATUS_COLORS: Record<string, string> = {
+  OPEN: '#3B82F6',
+  IN_PROGRESS: '#F59E0B',
+  RESOLVED: '#10B981',
+  CLOSED: '#64748B',
+};
+
+export const PRIORITY_COLORS: Record<string, string> = {
+  LOW: '#64748B',
+  MEDIUM: '#3B82F6',
+  HIGH: '#F59E0B',
+  URGENT: '#EF4444',
+};
+
+export const AUTOMATION_TYPES = [
+  { label: 'Auto Payroll', value: 'AUTO_PAYROLL' },
+  { label: 'Auto Attendance', value: 'AUTO_ATTENDANCE' },
+  { label: 'Auto Leave Balance', value: 'AUTO_LEAVE_BALANCE' },
+  { label: 'Auto Reminder', value: 'AUTO_REMINDER' },
+] as const;
+
+export const EMPLOYEE_ROLES = [
+  { label: 'Employee', value: 'EMPLOYEE' },
+  { label: 'Manager', value: 'MANAGER' },
+  { label: 'HR', value: 'HR' },
+  { label: 'Company Admin', value: 'COMPANY_ADMIN' },
 ] as const;
 
 export const LEAVE_STATUS_COLORS: Record<string, string> = {

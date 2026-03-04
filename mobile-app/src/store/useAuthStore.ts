@@ -58,10 +58,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
         return {};
       } catch (error: any) {
         set({ isLoading: false });
-        return {
-          error:
-            error.response?.data?.message || 'Login failed. Please try again.',
-        };
+        const msg =
+          error.response?.data?.message ||
+          error.message ||
+          'Login failed. Please try again.';
+        console.log('Login error:', error.message, error.response?.status, error.response?.data);
+        return { error: msg };
       }
     },
 

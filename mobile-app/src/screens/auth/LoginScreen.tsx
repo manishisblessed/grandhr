@@ -95,6 +95,22 @@ export default function LoginScreen({ navigation }: Props) {
             size="lg"
             style={styles.loginBtn}
           />
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Register')}
+            style={styles.registerBtn}
+          >
+            <Text style={styles.registerText}>
+              Don't have an account? <Text style={styles.registerBold}>Register</Text>
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CompanyOnboarding')}
+            style={styles.companyBtn}
+          >
+            <Text style={styles.companyText}>Register your company</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -148,4 +164,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   loginBtn: { marginTop: Spacing.sm },
+  registerBtn: { marginTop: Spacing.xl, alignItems: 'center' },
+  registerText: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  registerBold: { color: Colors.primary, fontWeight: '600' },
+  companyBtn: { marginTop: Spacing.md, alignItems: 'center' },
+  companyText: { fontSize: FontSize.sm, color: Colors.secondary, fontWeight: '500' },
 });

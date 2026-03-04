@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo.jpeg';
 
 // Sidebar Navigation Component
 const Sidebar = ({ isOpen, setIsOpen }) => {
