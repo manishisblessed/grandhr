@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../../components/common/Card';
@@ -13,6 +14,7 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { useAuthStore } from '../../store/useAuthStore';
 import { AuthService } from '../../services/auth.service';
+import { WHATSAPP_URL, WHATSAPP_MESSAGE } from '../../constants/config';
 import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
 
 export default function SettingsScreen() {
@@ -125,6 +127,16 @@ export default function SettingsScreen() {
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>App</Text>
         <SettingRow icon="information-circle-outline" label="Version" value="1.0.0" />
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => Linking.openURL(`${WHATSAPP_URL}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`).catch(() => {})}
+        >
+          <View style={rowStyles.left}>
+            <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+            <Text style={rowStyles.label}>Chat on WhatsApp</Text>
+          </View>
+          <Ionicons name="open-outline" size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
       </Card>
 
       <Button

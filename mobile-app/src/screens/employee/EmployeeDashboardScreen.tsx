@@ -19,7 +19,7 @@ import { DashboardService } from '../../services/dashboard.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
 import { LEAVE_STATUS_COLORS } from '../../constants/config';
-import { getGreeting, formatDate, formatTime, formatCurrency } from '../../utils/formatters';
+import { getGreeting, formatDate, formatTime, formatCurrency, getRoleLabel } from '../../utils/formatters';
 import { DashboardStats, Attendance } from '../../types';
 
 export default function EmployeeDashboardScreen() {
@@ -103,6 +103,9 @@ export default function EmployeeDashboardScreen() {
           <Text style={styles.userName}>
             {user?.employee?.firstName || user?.name || 'Employee'}
           </Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleText}>{getRoleLabel(user?.role || 'EMPLOYEE')} Dashboard</Text>
+          </View>
         </View>
         <View style={styles.avatarWrap}>
           <Ionicons name="person" size={24} color={Colors.primary} />
@@ -231,6 +234,15 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: FontSize.sm, color: Colors.textSecondary },
   userName: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text },
+  roleBadge: {
+    marginTop: Spacing.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.primary + '18',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+  },
+  roleText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.primary },
   avatarWrap: {
     width: 48,
     height: 48,

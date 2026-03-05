@@ -26,10 +26,21 @@
       "package": "com.grandhr.mobile"
     },
     "extra": {
-      "apiUrl": "https://api.grandhr.in/api"
+      "apiUrl": "https://api.grandhr.in/api",
+      "eas": {
+        "projectId": "f1f7cd5c-bcf1-468b-bbb8-854765cd84e1"
+      }
     },
     "plugins": [
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      "expo-font"
+    ],
+    "owner": "manishisspecial",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f1f7cd5c-bcf1-468b-bbb8-854765cd84e1"
+    }
   }
 }

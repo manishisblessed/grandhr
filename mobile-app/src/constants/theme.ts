@@ -14,9 +14,10 @@ export const Colors = {
   info: '#3B82F6',
   infoLight: '#DBEAFE',
 
-  background: '#F8FAFC',
+  background: '#F1F5F9',
+  backgroundAlt: '#E2E8F0',
   surface: '#FFFFFF',
-  surfaceVariant: '#F1F5F9',
+  surfaceVariant: '#F8FAFC',
   border: '#E2E8F0',
   borderLight: '#F1F5F9',
 
@@ -26,6 +27,7 @@ export const Colors = {
   textInverse: '#FFFFFF',
 
   skeleton: '#E2E8F0',
+  whatsapp: '#25D366',
 } as const;
 
 export const Spacing = {
@@ -60,22 +62,22 @@ export const Shadow = {
   sm: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   md: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   lg: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
   },
 } as const;

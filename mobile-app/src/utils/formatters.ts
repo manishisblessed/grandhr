@@ -64,3 +64,14 @@ export function getRelativeTime(dateString: string): string {
   if (days < 7) return `${days}d ago`;
   return formatDate(dateString);
 }
+
+export function getRoleLabel(role: string): string {
+  const labels: Record<string, string> = {
+    SUPER_ADMIN: 'Super Admin',
+    COMPANY_ADMIN: 'Company Admin',
+    HR: 'HR',
+    MANAGER: 'Manager',
+    EMPLOYEE: 'Employee',
+  };
+  return labels[role] || role.replace(/_/g, ' ');
+}

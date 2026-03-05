@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNotificationStore } from '../store/useNotificationStore';
@@ -7,6 +8,7 @@ import AuthNavigator from './AuthNavigator';
 import AdminTabNavigator from './AdminTabNavigator';
 import EmployeeTabNavigator from './EmployeeTabNavigator';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import WhatsAppButton from '../components/common/WhatsAppButton';
 
 export default function AppNavigator() {
   const { user, isAuthenticated, isInitialized, initialize } = useAuthStore();
@@ -31,14 +33,17 @@ export default function AppNavigator() {
   const isAdmin = user?.role && ADMIN_ROLES.includes(user.role);
 
   return (
-    <NavigationContainer>
-      {!isAuthenticated ? (
-        <AuthNavigator />
-      ) : isAdmin ? (
-        <AdminTabNavigator />
-      ) : (
-        <EmployeeTabNavigator />
-      )}
-    </NavigationContainer>
+    <View style={{ flex: 1 }}>
+      <NavigationContainer>
+        {!isAuthenticated ? (
+          <AuthNavigator />
+        ) : isAdmin ? (
+          <AdminTabNavigator />
+        ) : (
+          <EmployeeTabNavigator />
+        )}
+      </NavigationContainer>
+      {isAuthenticated && <WhatsAppButton />}
+    </View>
   );
 }

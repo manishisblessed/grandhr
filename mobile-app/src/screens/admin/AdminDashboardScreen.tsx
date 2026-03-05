@@ -13,8 +13,8 @@ import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useAuthStore } from '../../store/useAuthStore';
 import { DashboardService } from '../../services/dashboard.service';
-import { Colors, FontSize, Spacing } from '../../constants/theme';
-import { getGreeting, formatCurrency } from '../../utils/formatters';
+import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { getGreeting, formatCurrency, getRoleLabel } from '../../utils/formatters';
 import { DashboardStats } from '../../types';
 
 export default function AdminDashboardScreen() {
@@ -53,7 +53,9 @@ export default function AdminDashboardScreen() {
       <View style={styles.header}>
         <Text style={styles.greeting}>{getGreeting()}</Text>
         <Text style={styles.name}>{user?.name || 'Admin'}</Text>
-        <Text style={styles.role}>{user?.role?.replace('_', ' ')}</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleText}>{getRoleLabel(user?.role || '')} Dashboard</Text>
+        </View>
       </View>
 
       <View style={styles.statsGrid}>
@@ -112,13 +114,15 @@ const styles = StyleSheet.create({
   header: { marginBottom: Spacing.xl },
   greeting: { fontSize: FontSize.sm, color: Colors.textSecondary },
   name: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text },
-  role: {
-    fontSize: FontSize.sm,
-    color: Colors.primary,
-    fontWeight: '500',
-    textTransform: 'capitalize',
-    marginTop: 2,
+  roleBadge: {
+    marginTop: Spacing.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.primary + '18',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
   },
+  roleText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.primary },
   statsGrid: { gap: Spacing.md, marginBottom: Spacing.xl },
   statsRow: { flexDirection: 'row', gap: Spacing.md },
   sectionTitle: {

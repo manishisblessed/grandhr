@@ -1,5 +1,9 @@
 export const API_BASE_URL = 'http://192.168.1.8:5000/api';
 
+export const WHATSAPP_NUMBER = '919090702705';
+export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+export const WHATSAPP_MESSAGE = 'Hi GrandHR! I need help with HR management.';
+
 export const TOKEN_KEY = 'grandhr_token';
 export const USER_KEY = 'grandhr_user';
 

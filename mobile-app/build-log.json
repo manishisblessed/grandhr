@@ -1,0 +1,61 @@
+﻿node.exe : - Fetching the buildΓÇª
+At C:\Users\hp\AppData\Roaming\npm\eas.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/eas-cli/bin/run" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (- Fetching the buildΓÇª:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ΓêÜ Found a matching build for the project @manishisspecial/grandhr-mobile
+{
+  "id": "2ffbf3b9-53e5-4c53-93f3-6d5558170a2e",
+  "status": "ERRORED",
+  "platform": "ANDROID",
+  "error": {
+    "errorCode": "UNKNOWN_ERROR",
+    "message": "Unknown error. See logs of the Prebuild build phase for more information."
+  },
+  "artifacts": {},
+  "fingerprint": {
+    "id": "019cb87f-faec-76ea-abbb-d6b76c10bc69",
+    "hash": "574b5c7d8d2e97fb1f04b4bbed58cf247c0cc6c2"
+  },
+  "initiatingActor": {
+    "id": "b598874c-92e7-40c3-a30e-c4083bc19e0b",
+    "displayName": "manishisspecial"
+  },
+  "logFiles": [
+    "https://job-logs.eascdn.net/production/2ffbf3b9-53e5-4c53-93f3-6d5558170a2e/1772621921390-b9e3845c-b101-47da-8df6-a84fb57f845a.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260304%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260304T112737Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=3d68918325bd185fdeed28417628a7c98406e253c56611347ebba494f14dd5831866d4fd51fb51d0c426348f64827fe7e36259c017eb41f9a3c3ef46ad202af2179c452719183342d5ec187fab3b5cb4f5579c0e9d42e6c7291dbe7755c67e76952f35ef2057d50cb6d846b64fed6a7869c22328b0c33b267ef2994bb33f42b0593c89ea15902711908902ee2205f4ce7b3afb6d7c4b3f31e596a2ba1ad8882d51012589521b4506e00a7d097c954826d34e6567f378af535cf9e591d49ee09261159c0e3a0fd8d86155a17dfd3eec5a465cc0a4c445f3e6bdf5bac6092f75f0d2c93130a1f7c0c0868dd0b10acb4890ce8ffe5bc068811d7a1351e8b2cd7148",
+    "https://job-logs.eascdn.net/production/2ffbf3b9-53e5-4c53-93f3-6d5558170a2e/1772623165372-2a9a1623-cce7-4de8-97a5-15d2c2db82a5.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260304%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260304T111953Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=4d413054b443b7491a7b0ad6b01a3a399fb3db38ef75dee1b9dbcf31f9fc7ba995f3e91a4fa0f43a229604cf55943f0ea97a2634925a04af1a441eeb822930f12ed90f90d3d0caeb2bfb29452ab9676d6b8187ef2a273e4403ad2292fad13ae93f62153bac5b1783c3e06cbe4fe4c59f86de7b332730ddb99425793c35b6be838b9febbb76b6c946eaed0d101218198a283e9253088eb991c64c75b0a7ddae9fa2cca26155f748e15eb6d9bb5799ced4f1b91ae20361b589bf3c1cb41e7fc125db0fa2567cef3d0cb622d5b5ebbab49a6cf2b45a66359a938e850d638d4645f2b92a072c6e2977b90b3b64098142b585c639a101801dffb3ba6032e6bdc7014c",
+    "https://job-logs.eascdn.net/production/2ffbf3b9-53e5-4c53-93f3-6d5558170a2e/1772623165606-20f13099-d1fc-4081-bc7a-0d601ec97fa4.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260304%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260304T111953Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=56b5d7058a62f87dadfbe0442e51ef0ba7dabfa22219d0320ad8eb36096ccffac987b510e46195d8c3d24e14a6bd9f6ac55278f8f19b19ba25a6943899ceb53ba29355a5da69a894973c7d068fc504e1bfa7fab5e533fb1a49b97d3ad5668fdff7abc6cb300a4e76152ec0e4709a7ebd2e484813ec209ab14cdfb48f9139f82f545ce2c9cd57b2a2d1ee41d5e0cf6f917cf2857da27ae43347c4659203a20ead09ddc00dc61ae37f89f1677a82b4a8add20e47b8c24e20ec9ef39726a7106373883c0bf2fa9aafcd9bf3fdff545f188381dd60a9c50df8ee84341343c8b16841672ca67673744dd3fbaf5121d681b92acb3bf957881f2d6bf50139e0af518932",
+    "https://job-logs.eascdn.net/production/2ffbf3b9-53e5-4c53-93f3-6d5558170a2e/1772623165794-25b2720d-e0c4-4732-a085-7285c2fa58fe.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260304%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260304T112737Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=4f1d90f2bb70b09ccf69fd034f6a28168b2f510d77e312a4345d76ab3cf7ffad25df686a7de4c2c94ac8ff51c4d0c7fe5605af934a59e2dec9ecce4f453b8a3c1ade176565d51b5555ce8c35d67b66caa8522fecfbc820c48da147372702c98a618e23bc5c2309755fe3270b84c2d40b42095d1717e2721d599e4bbe45e3bbea9cf83fa9a8b073c0169a216cbb7a049c0290f7eab191e4050798332e0a65d90ac4b16e0411cbe8070048634ea8a71b516b914a05153b41d4deb0ad46ed2ee2da0e4887cb29039e970c04f9e508053ddf1bc213f76a684dfa3134c5377d8b569b09994a573f02368ea1d798fe209203e5899221d61dd83ce423fd72b823d2c808"
+  ],
+  "project": {
+    "id": "f1f7cd5c-bcf1-468b-bbb8-854765cd84e1",
+    "name": "grandhr-mobile",
+    "slug": "grandhr-mobile",
+    "ownerAccount": {
+      "id": "0a3b0726-0528-4114-aef5-b2f321e9c8f3",
+      "name": "manishisspecial"
+    }
+  },
+  "channel": "preview",
+  "distribution": "INTERNAL",
+  "buildProfile": "preview",
+  "sdkVersion": "54.0.0",
+  "appVersion": "1.0.0",
+  "appBuildVersion": "1",
+  "runtimeVersion": "1.0.0",
+  "gitCommitHash": "f0672cfc742f0486d79ce856b5cf2f6b41e8d9fc",
+  "gitCommitMessage": "number updated",
+  "priority": "NORMAL",
+  "createdAt": "2026-03-04T10:58:40.925Z",
+  "updatedAt": "2026-03-04T11:20:36.271Z",
+  "completedAt": "2026-03-04T11:20:29.922Z",
+  "expirationDate": "2026-03-18T10:58:40.984Z",
+  "isForIosSimulator": false,
+  "metrics": {
+    "buildWaitTime": 219,
+    "buildQueueTime": 1288802,
+    "buildDuration": 19685
+  }
+}
