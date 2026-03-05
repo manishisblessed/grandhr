@@ -8,8 +8,8 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { WHATSAPP_URL, WHATSAPP_MESSAGE } from '../constants/config';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow } from '../constants/theme';
+import { WHATSAPP_URL, WHATSAPP_MESSAGE } from '../../constants/config';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow } from '../../constants/theme';
 
 const CHAT_URL = `${WHATSAPP_URL}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 

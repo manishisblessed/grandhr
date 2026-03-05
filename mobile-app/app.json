@@ -28,19 +28,19 @@
     "extra": {
       "apiUrl": "https://api.grandhr.in/api",
       "eas": {
-        "projectId": "f1f7cd5c-bcf1-468b-bbb8-854765cd84e1"
+        "projectId": "eb4ea9be-7b0d-46fc-942b-f1848e9fe49a"
       }
     },
     "plugins": [
       "expo-secure-store",
       "expo-font"
     ],
-    "owner": "manishisspecial",
+    "owner": "grandhr",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/f1f7cd5c-bcf1-468b-bbb8-854765cd84e1"
+      "url": "https://u.expo.dev/eb4ea9be-7b0d-46fc-942b-f1848e9fe49a"
     }
   }
 }
