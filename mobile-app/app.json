@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#4F46E5"
       },
-      "package": "com.grandhr.mobile"
+      "package": "com.grandhr.mobile",
+      "usesCleartextTraffic": true
     },
     "extra": {
       "apiUrl": "http://3.82.65.130:5000/api",
