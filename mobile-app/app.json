@@ -26,7 +26,7 @@
       "package": "com.grandhr.mobile"
     },
     "extra": {
-      "apiUrl": "https://api.grandhr.in/api",
+      "apiUrl": "http://3.82.65.130:5000/api",
       "eas": {
         "projectId": "eb4ea9be-7b0d-46fc-942b-f1848e9fe49a"
       }

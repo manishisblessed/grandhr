@@ -8,6 +8,7 @@ applications:
             - npm ci
         build:
           commands:
+            # VITE_API_URL set in Amplify Console > Environment variables (e.g. https://api.grandhr.in/api)
             - npm run build
       artifacts:
         baseDirectory: dist

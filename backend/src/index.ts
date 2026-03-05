@@ -47,12 +47,15 @@ app.use(helmet({
   },
 }));
 
-// CORS Configuration
+// CORS: allow web and mobile app. In production, default to * if not set so mobile app can connect.
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : process.env.NODE_ENV === 'production'
+    ? '*'  // allow mobile app and any web client
+    : true;
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || process.env.NODE_ENV === 'production' 
-    ? process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000']
-    : true,
-  credentials: true,
+  origin: corsOrigin,
+  credentials: corsOrigin !== '*',
   optionsSuccessStatus: 200,
 };
 

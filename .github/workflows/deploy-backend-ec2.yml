@@ -1,0 +1,37 @@
+# Deploy GrandHR backend to EC2 on push to main (when backend/ changes).
+# Required GitHub secrets: EC2_HOST, EC2_SSH_KEY, EC2_USER (optional, default ubuntu)
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend-ec2.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            REPO_PATH="${{ secrets.EC2_APP_PATH }}"
+            [ -z "$REPO_PATH" ] && REPO_PATH=/home/ubuntu/GrandHR
+            cd "$REPO_PATH"
+            git fetch origin main
+            git reset --hard origin/main
+            cd backend
+            npm ci
+            npx prisma generate
+            npm run build
+            pm2 restart grandhr-api --update-env || pm2 start dist/index.js --name grandhr-api
+            pm2 save
