@@ -1,11 +1,12 @@
 {
   "expo": {
-    "name": "GrandHR",
+    "name": "GrandHR - HR Management",
     "slug": "grandhr-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "grandhr",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -16,7 +17,24 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.grandhr.mobile"
+      "bundleIdentifier": "com.grandhr.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "GrandHR needs camera access to upload profile photos and documents.",
+        "NSPhotoLibraryUsageDescription": "GrandHR needs photo library access to upload profile photos and documents.",
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,10 +42,26 @@
         "backgroundColor": "#4F46E5"
       },
       "package": "com.grandhr.mobile",
-      "usesCleartextTraffic": true
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
+      "blockedPermissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
     },
     "extra": {
-      "apiUrl": "http://3.82.65.130:5000/api",
+      "apiUrl": "https://api.grandhr.in/api",
       "eas": {
         "projectId": "eb4ea9be-7b0d-46fc-942b-f1848e9fe49a"
       }
@@ -41,7 +75,8 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/eb4ea9be-7b0d-46fc-942b-f1848e9fe49a"
+      "url": "https://u.expo.dev/eb4ea9be-7b0d-46fc-942b-f1848e9fe49a",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

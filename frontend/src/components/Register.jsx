@@ -33,7 +33,7 @@ const Register = () => {
     try {
       const { error } = await signUp(email, password);
       if (error) {
-        setError(error.message);
+        setError(error);
       } else {
         setSuccess('Account created successfully! Please check your email to verify your account, then sign in.');
         setTimeout(() => {

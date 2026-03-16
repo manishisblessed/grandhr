@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -40,20 +40,28 @@ const EMPTY_FORM = {
 export default function EmployeesScreen() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current); };
+  }, [search]);
 
   const fetchEmployees = useCallback(async () => {
     try {
-      const res = await EmployeeService.getAll({ search: search || undefined });
+      const res = await EmployeeService.getAll({ search: debouncedSearch || undefined });
       const data = res.data;
       setEmployees(Array.isArray(data) ? data : (data as any)?.employees || (data as any)?.data || []);
     } catch {} finally { setLoading(false); setRefreshing(false); }
-  }, [search]);
+  }, [debouncedSearch]);
 
   useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
 

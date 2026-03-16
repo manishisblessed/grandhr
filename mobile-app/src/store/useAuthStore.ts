@@ -62,7 +62,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           error.response?.data?.message ||
           error.message ||
           'Login failed. Please try again.';
-        console.log('Login error:', error.message, error.response?.status, error.response?.data);
+        if (__DEV__) console.log('Login error:', error.message, error.response?.status);
         return { error: msg };
       }
     },

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import api from '../utils/api';
 import logoImg from '../assets/logo.jpeg';
 
 const Navbar = () => {
@@ -118,7 +119,8 @@ const Navbar = () => {
                   {hrUser?.employee?.firstName || hrUser?.email}
                 </span>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    try { await api.post('/auth/logout'); } catch {}
                     localStorage.removeItem('hr_token');
                     localStorage.removeItem('hr_user');
                     navigate('/hr/login');
@@ -204,7 +206,8 @@ const Navbar = () => {
                       {hrUser?.employee?.firstName || hrUser?.email}
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
+                        try { await api.post('/auth/logout'); } catch {}
                         localStorage.removeItem('hr_token');
                         localStorage.removeItem('hr_user');
                         setIsMenuOpen(false);

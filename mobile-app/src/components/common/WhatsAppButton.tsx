@@ -55,15 +55,15 @@ export default function WhatsAppButton() {
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    bottom: 100,
-    right: Spacing.lg,
+    bottom: 24,
+    left: Spacing.lg,
     zIndex: 999,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
   tooltip: {
     position: 'absolute',
     bottom: 56,
-    right: 0,
+    left: 0,
     width: 260,
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,

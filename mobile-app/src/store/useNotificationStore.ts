@@ -35,39 +35,47 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAsRead: async (id) => {
-    await NotificationService.markAsRead(id);
-    set((s) => ({
-      notifications: s.notifications.map((n) =>
-        n.id === id ? { ...n, isRead: true } : n,
-      ),
-      unreadCount: Math.max(0, s.unreadCount - 1),
-    }));
+    try {
+      await NotificationService.markAsRead(id);
+      set((s) => ({
+        notifications: s.notifications.map((n) =>
+          n.id === id ? { ...n, isRead: true } : n,
+        ),
+        unreadCount: Math.max(0, s.unreadCount - 1),
+      }));
+    } catch {}
   },
 
   markAllAsRead: async () => {
-    await NotificationService.markAllAsRead();
-    set((s) => ({
-      notifications: s.notifications.map((n) => ({ ...n, isRead: true })),
-      unreadCount: 0,
-    }));
+    try {
+      await NotificationService.markAllAsRead();
+      set((s) => ({
+        notifications: s.notifications.map((n) => ({ ...n, isRead: true })),
+        unreadCount: 0,
+      }));
+    } catch {}
   },
 
   remove: async (id) => {
-    await NotificationService.delete(id);
-    set((s) => {
-      const removed = s.notifications.find((n) => n.id === id);
-      return {
-        notifications: s.notifications.filter((n) => n.id !== id),
-        unreadCount:
-          removed && !removed.isRead
-            ? Math.max(0, s.unreadCount - 1)
-            : s.unreadCount,
-      };
-    });
+    try {
+      await NotificationService.delete(id);
+      set((s) => {
+        const removed = s.notifications.find((n) => n.id === id);
+        return {
+          notifications: s.notifications.filter((n) => n.id !== id),
+          unreadCount:
+            removed && !removed.isRead
+              ? Math.max(0, s.unreadCount - 1)
+              : s.unreadCount,
+        };
+      });
+    } catch {}
   },
 
   clearAll: async () => {
-    await NotificationService.clearAll();
-    set({ notifications: [], unreadCount: 0 });
+    try {
+      await NotificationService.clearAll();
+      set({ notifications: [], unreadCount: 0 });
+    } catch {}
   },
 }));

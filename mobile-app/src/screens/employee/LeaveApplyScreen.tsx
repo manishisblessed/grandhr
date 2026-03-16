@@ -21,7 +21,7 @@ import { LeaveBalance } from '../../types';
 type Props = NativeStackScreenProps<any, 'LeaveApply'>;
 
 export default function LeaveApplyScreen({ navigation }: Props) {
-  const [leaveType, setLeaveType] = useState('CASUAL');
+  const [leaveType, setLeaveType] = useState('CASUAL_LEAVE');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
@@ -81,7 +81,7 @@ export default function LeaveApplyScreen({ navigation }: Props) {
               <View key={b.leaveType} style={styles.balanceItem}>
                 <Text style={styles.balanceValue}>{b.balance}</Text>
                 <Text style={styles.balanceLabel}>
-                  {b.leaveType.charAt(0) + b.leaveType.slice(1).toLowerCase()}
+                  {b.leaveType.replace(/_/g, ' ').charAt(0) + b.leaveType.replace(/_/g, ' ').slice(1).toLowerCase()}
                 </Text>
               </View>
             ))}
@@ -123,7 +123,7 @@ export default function LeaveApplyScreen({ navigation }: Props) {
 
         <Input
           label="Start Date (YYYY-MM-DD)"
-          placeholder="2025-03-01"
+          placeholder="YYYY-MM-DD"
           value={startDate}
           onChangeText={setStartDate}
           leftIcon="calendar-outline"
@@ -131,7 +131,7 @@ export default function LeaveApplyScreen({ navigation }: Props) {
 
         <Input
           label="End Date (YYYY-MM-DD)"
-          placeholder="2025-03-03"
+          placeholder="YYYY-MM-DD"
           value={endDate}
           onChangeText={setEndDate}
           leftIcon="calendar-outline"

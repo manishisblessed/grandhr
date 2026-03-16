@@ -9,6 +9,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -126,7 +127,7 @@ export default function SettingsScreen() {
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>App</Text>
-        <SettingRow icon="information-circle-outline" label="Version" value="1.0.0" />
+        <SettingRow icon="information-circle-outline" label="Version" value={Constants.expoConfig?.version || '1.0.0'} />
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => Linking.openURL(`${WHATSAPP_URL}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`).catch(() => {})}

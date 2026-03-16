@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://3.82.65.130:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.grandhr.in/api';
 
 const api = axios.create({
   baseURL: API_URL,

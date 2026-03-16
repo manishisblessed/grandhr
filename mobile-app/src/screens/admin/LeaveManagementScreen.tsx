@@ -87,7 +87,7 @@ export default function LeaveManagementScreen() {
               : 'Employee'}
           </Text>
           <Text style={styles.leaveType}>
-            {item.type.charAt(0) + item.type.slice(1).toLowerCase()} Leave
+            {item.type.replace(/_/g, ' ').split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')}
           </Text>
         </View>
         <Badge

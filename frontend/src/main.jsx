@@ -71,21 +71,21 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/forgot-username" element={<ForgotUsername />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           
-          {/* HR Management Routes - Full page without navbar/footer */}
-          <Route path="/hr/dashboard" element={<HRDashboard />} />
-          <Route path="/hr/employees" element={<Employees />} />
-          <Route path="/hr/leaves" element={<Leaves />} />
-          <Route path="/hr/attendance" element={<Attendance />} />
-          <Route path="/hr/payroll" element={<Payroll />} />
-          <Route path="/hr/automation" element={<Automation />} />
-          <Route path="/hr/support" element={<Support />} />
-          <Route path="/hr/notifications" element={<NotificationsPage />} />
+          {/* HR Management Routes - Protected */}
+          <Route path="/hr/dashboard" element={<HRProtectedRoute><HRDashboard /></HRProtectedRoute>} />
+          <Route path="/hr/employees" element={<HRProtectedRoute><Employees /></HRProtectedRoute>} />
+          <Route path="/hr/leaves" element={<HRProtectedRoute><Leaves /></HRProtectedRoute>} />
+          <Route path="/hr/attendance" element={<HRProtectedRoute><Attendance /></HRProtectedRoute>} />
+          <Route path="/hr/payroll" element={<HRProtectedRoute><Payroll /></HRProtectedRoute>} />
+          <Route path="/hr/automation" element={<HRProtectedRoute><Automation /></HRProtectedRoute>} />
+          <Route path="/hr/support" element={<HRProtectedRoute><Support /></HRProtectedRoute>} />
+          <Route path="/hr/notifications" element={<HRProtectedRoute><NotificationsPage /></HRProtectedRoute>} />
 
           {/* Employee Self-Service */}
-          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          <Route path="/employee/dashboard" element={<HRProtectedRoute><EmployeeDashboard /></HRProtectedRoute>} />
 
           {/* GrandHR Super Admin Dashboard */}
-          <Route path="/super-admin" element={<SuperAdminDashboard />} />
+          <Route path="/super-admin" element={<HRProtectedRoute><SuperAdminDashboard /></HRProtectedRoute>} />
           
           {/* App pages - with navbar */}
           <Route element={<AppLayout />}>
@@ -173,9 +173,19 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/resources" element={<Resources />} />
           </Route>
+
+          {/* 404 Catch-all */}
+          <Route path="*" element={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
+                <p className="text-xl text-gray-600 mb-6">Page not found</p>
+                <a href="/" className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Go Home</a>
+              </div>
+            </div>
+          } />
         </Routes>
         
-        {/* Global WhatsApp Widget - visible on all pages */}
         <WhatsAppWidget />
           </BrowserRouter>
         </NotificationProvider>

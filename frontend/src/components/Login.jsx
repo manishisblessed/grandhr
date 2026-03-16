@@ -19,7 +19,7 @@ const Login = () => {
     try {
       const { error } = await signIn(email, password);
       if (error) {
-        setError(error.message);
+        setError(error);
       } else {
         navigate('/hierarchy');
       }
