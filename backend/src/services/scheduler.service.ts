@@ -60,21 +60,25 @@ export class SchedulerService {
         
         const metaMessage = connectionError.meta?.message || '';
         
-        // Check for various database connection errors
+        // Check for various database connection/authentication errors
         const isDatabaseError = 
           errorMessage.includes("Can't reach database server") || 
           errorMessage.includes("P1001") ||
           errorMessage.includes("the URL must start with the protocol") ||
           errorMessage.includes("Error validating datasource") ||
           errorMessage.includes("empty database name not allowed") ||
+          errorMessage.includes("SCRAM failure") ||
+          errorMessage.includes("authentication failed") ||
+          errorMessage.includes("bad auth") ||
           metaMessage.includes("empty database name not allowed") ||
           errorCode === 'P1012' ||
           errorCode === 'P2010' ||
           errorName === 'PrismaClientInitializationError' ||
-          errorName === 'PrismaClientKnownRequestError';
+          errorName === 'PrismaClientKnownRequestError' ||
+          errorName === 'PrismaClientUnknownRequestError';
         
         if (isDatabaseError) {
-          console.warn('⚠️  Database not configured or unavailable, skipping scheduler check');
+          console.warn('⚠️  Database not configured or unavailable (check DATABASE_URL on server), skipping scheduler check');
           return;
         }
         // Re-throw unexpected errors

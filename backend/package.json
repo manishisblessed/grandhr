@@ -16,7 +16,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
-    "setup:enterprise": "tsx src/scripts/setup-enterprise.ts"
+    "setup:enterprise": "tsx src/scripts/setup-enterprise.ts",
+    "test:db": "tsx scripts/test-db-connection.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

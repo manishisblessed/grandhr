@@ -2,15 +2,6 @@
 
 ## ✅ Pre-Deployment
 
-### Supabase Setup
-- [ ] Supabase project created
-- [ ] Database schema run (`supabase-complete-schema.sql`)
-- [ ] Credentials saved:
-  - [ ] Project URL
-  - [ ] Anon key
-  - [ ] Service role key
-  - [ ] Database password
-
 ### Code Preparation
 - [ ] All code committed to GitHub
 - [ ] `.env` files are in `.gitignore`
@@ -61,9 +52,9 @@
    - [ ] Install Command: `npm install`
 
 3. **Set Environment Variables**
-   - [ ] `VITE_SUPABASE_URL`
-   - [ ] `VITE_SUPABASE_ANON_KEY`
-   - [ ] `VITE_API_URL` (use backend URL from above)
+   - [ ] `VITE_API_URL` (use backend URL, e.g. `https://api.grandhr.in/api`)
+   - [ ] `VITE_RAZORPAY_KEY_ID` (if using Razorpay)
+   - (Supabase not used — app uses MongoDB via backend.)
 
 4. **Deploy**
    - [ ] Click Deploy
@@ -104,7 +95,6 @@ Expected: `{"status":"ok","message":"GrandHR API is running"}`
 
 - Frontend URL: `https://xxx.vercel.app`
 - Backend URL: `https://xxx.vercel.app`
-- Supabase Dashboard: `https://supabase.com/dashboard`
 
 ## 🎯 Success Criteria
 
