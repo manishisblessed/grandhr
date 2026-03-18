@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -6,8 +7,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding GrandHR database...');
 
-  const superAdminEmail = 'super_admin@grandhr.in';
-  const superAdminPassword = 'GrandHR@2026';
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'super_admin@grandhr.in';
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+
+  if (!superAdminPassword) {
+    console.error('ERROR: SUPER_ADMIN_PASSWORD env var is required.');
+    console.error('Set it in backend/.env, e.g.: SUPER_ADMIN_PASSWORD=YourStrongPassword123');
+    process.exit(1);
+  }
 
   const existing = await prisma.user.findUnique({
     where: { email: superAdminEmail },
@@ -44,16 +51,13 @@ async function main() {
 
     console.log('SUPER_ADMIN user created successfully:');
     console.log(`  Email: ${superAdminEmail}`);
-    console.log(`  Password: ${superAdminPassword}`);
     console.log(`  User ID: ${user.id}`);
     console.log(`  Employee ID: ${user.employee?.employeeId}`);
   }
 
   console.log('\n--- GrandHR Seed Complete ---');
-  console.log(`Login at /hr/login with:`);
-  console.log(`  Email: ${superAdminEmail}`);
-  console.log(`  Password: ${superAdminPassword}`);
-  console.log(`  Then navigate to /super-admin for the admin dashboard.`);
+  console.log(`Login at /hr/login with the email: ${superAdminEmail}`);
+  console.log('Then navigate to /super-admin for the admin dashboard.');
 }
 
 main()

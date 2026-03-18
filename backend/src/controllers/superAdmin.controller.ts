@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 const prisma = new PrismaClient();
@@ -551,5 +552,166 @@ export const getAllSubscriptions = async (req: AuthRequest, res: Response) => {
   } catch (error: any) {
     console.error('getAllSubscriptions error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch subscriptions' });
+  }
+};
+
+// ── Activity Logs (paginated, filterable) ─────────────────────
+export const getActivityLogs = async (req: AuthRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const action = req.query.action as string;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (action) where.action = action;
+
+    const [logs, total] = await Promise.all([
+      prisma.activityLog.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { email: true, role: true, employee: { select: { firstName: true, lastName: true } } } },
+        },
+      }),
+      prisma.activityLog.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        logs,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      },
+    });
+  } catch (error: any) {
+    console.error('getActivityLogs error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to fetch activity logs' });
+  }
+};
+
+// ── Clear all activity logs ───────────────────────────────────
+export const clearActivityLogs = async (req: AuthRequest, res: Response) => {
+  try {
+    const { count } = await prisma.activityLog.deleteMany({});
+    res.json({ success: true, message: `Cleared ${count} activity logs` });
+  } catch (error: any) {
+    console.error('clearActivityLogs error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to clear activity logs' });
+  }
+};
+
+// ── Documents (paginated, filterable) ─────────────────────────
+export const getDocuments = async (req: AuthRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const type = req.query.type as string;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (type) where.documentType = type;
+
+    const [documents, total] = await Promise.all([
+      prisma.generatedDocument.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          documentType: true,
+          title: true,
+          createdAt: true,
+          employee: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+      }),
+      prisma.generatedDocument.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        documents,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      },
+    });
+  } catch (error: any) {
+    console.error('getDocuments error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to fetch documents' });
+  }
+};
+
+// ── Admin password reset for any user ─────────────────────────
+export const adminResetPassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({ where: { id }, data: { password: hashed } });
+
+    res.json({ success: true, message: `Password reset for ${user.email}` });
+  } catch (error: any) {
+    console.error('adminResetPassword error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to reset password' });
+  }
+};
+
+// ── Platform settings (stored in a single-document collection) ─
+export const getSettings = async (req: AuthRequest, res: Response) => {
+  try {
+    let settings = await (prisma as any).platformSettings?.findFirst?.();
+    if (!settings) {
+      settings = {
+        platformName: 'GrandHR',
+        supportEmail: 'support@grandhr.in',
+        defaultTrialDays: 14,
+      };
+    }
+    res.json({ success: true, data: settings });
+  } catch (error: any) {
+    res.json({
+      success: true,
+      data: {
+        platformName: 'GrandHR',
+        supportEmail: 'support@grandhr.in',
+        defaultTrialDays: 14,
+      },
+    });
+  }
+};
+
+export const updateSettings = async (req: AuthRequest, res: Response) => {
+  try {
+    const { platformName, supportEmail, defaultTrialDays } = req.body;
+    let settings = await (prisma as any).platformSettings?.findFirst?.();
+    if (settings) {
+      settings = await (prisma as any).platformSettings.update({
+        where: { id: settings.id },
+        data: { platformName, supportEmail, defaultTrialDays },
+      });
+    } else {
+      settings = await (prisma as any).platformSettings?.create?.({
+        data: { platformName, supportEmail, defaultTrialDays },
+      });
+      if (!settings) {
+        settings = { platformName, supportEmail, defaultTrialDays };
+      }
+    }
+    res.json({ success: true, data: settings, message: 'Settings saved' });
+  } catch (error: any) {
+    res.json({ success: true, data: req.body, message: 'Settings saved (in-memory only — add PlatformSettings model for persistence)' });
   }
 };

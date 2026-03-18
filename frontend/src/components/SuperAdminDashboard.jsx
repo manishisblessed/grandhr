@@ -263,15 +263,24 @@ const SuperAdminDashboard = () => {
   const [activityTotalPages, setActivityTotalPages] = useState(1);
   const [activityActionFilter, setActivityActionFilter] = useState('');
 
+  // Reset password modal
+  const [resetPwModal, setResetPwModal] = useState(null);
+  const [resetPwValue, setResetPwValue] = useState('');
+
+  // Settings
+  const [settingsData, setSettingsData] = useState({ platformName: 'GrandHR', supportEmail: 'support@grandhr.in', defaultTrialDays: 14 });
+
   // ── Toasts helper ─────────────────────────────────────────
   const showToast = (message, type = 'success') => setToast({ message, type });
 
   // ── Data fetching ─────────────────────────────────────────
+  const unwrap = (res) => res.data?.data ?? res.data ?? {};
+
   const fetchDashboard = async () => {
     setLoading(true);
     try {
       const res = await api.get('/super-admin/dashboard');
-      setDashboardData(res.data);
+      setDashboardData(unwrap(res));
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load dashboard', 'error');
     } finally {
@@ -283,9 +292,10 @@ const SuperAdminDashboard = () => {
     setLoading(true);
     try {
       const res = await api.get('/super-admin/companies', { params: { page, limit: 10, search, status } });
-      setCompanies(res.data.companies || res.data.data || []);
-      setCompaniesTotalPages(res.data.totalPages || res.data.pages || 1);
-      setCompaniesPage(res.data.currentPage || page);
+      const d = unwrap(res);
+      setCompanies(d.companies || []);
+      setCompaniesTotalPages(d.pagination?.totalPages || 1);
+      setCompaniesPage(d.pagination?.page || page);
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load companies', 'error');
     } finally {
@@ -297,7 +307,7 @@ const SuperAdminDashboard = () => {
     setCompanyDetailLoading(true);
     try {
       const res = await api.get(`/super-admin/companies/${id}`);
-      setSelectedCompany(res.data.company || res.data);
+      setSelectedCompany(unwrap(res));
       setCompanyDetailModal(true);
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load company details', 'error');
@@ -331,9 +341,10 @@ const SuperAdminDashboard = () => {
     setLoading(true);
     try {
       const res = await api.get('/super-admin/users', { params: { page, limit: 10, search, role } });
-      setUsers(res.data.users || res.data.data || []);
-      setUsersTotalPages(res.data.totalPages || res.data.pages || 1);
-      setUsersPage(res.data.currentPage || page);
+      const d = unwrap(res);
+      setUsers(d.users || []);
+      setUsersTotalPages(d.pagination?.totalPages || 1);
+      setUsersPage(d.pagination?.page || page);
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load users', 'error');
     } finally {
@@ -365,7 +376,8 @@ const SuperAdminDashboard = () => {
     setLoading(true);
     try {
       const res = await api.get('/super-admin/subscriptions');
-      setSubscriptions(res.data.subscriptions || res.data.data || res.data || []);
+      const d = unwrap(res);
+      setSubscriptions(d.subscriptions || []);
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load subscriptions', 'error');
     } finally {
@@ -377,7 +389,8 @@ const SuperAdminDashboard = () => {
     setLoading(true);
     try {
       const res = await api.get('/super-admin/documents');
-      setDocuments(res.data.documents || res.data.data || res.data || []);
+      const d = unwrap(res);
+      setDocuments(d.documents || []);
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load documents', 'error');
     } finally {
@@ -389,14 +402,52 @@ const SuperAdminDashboard = () => {
     setLoading(true);
     try {
       const res = await api.get('/super-admin/activity-logs', { params: { page, limit: 20, action } });
-      setActivityLogs(res.data.logs || res.data.data || res.data || []);
-      setActivityTotalPages(res.data.totalPages || res.data.pages || 1);
-      setActivityPage(res.data.currentPage || page);
+      const d = unwrap(res);
+      setActivityLogs(d.logs || []);
+      setActivityTotalPages(d.pagination?.totalPages || 1);
+      setActivityPage(d.pagination?.page || page);
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to load activity logs', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetUserPassword = async (userId, newPassword) => {
+    try {
+      await api.put(`/super-admin/users/${userId}/reset-password`, { newPassword });
+      showToast('Password reset successfully');
+      setResetPwModal(null);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to reset password', 'error');
+    }
+  };
+
+  const clearAllLogs = async () => {
+    if (!window.confirm('Are you sure you want to clear ALL activity logs? This cannot be undone.')) return;
+    try {
+      const res = await api.delete('/super-admin/activity-logs');
+      showToast(res.data?.message || 'Activity logs cleared');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to clear logs', 'error');
+    }
+  };
+
+  const saveSettings = async () => {
+    try {
+      await api.put('/super-admin/settings', settingsData);
+      showToast('Settings saved');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to save settings', 'error');
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await api.get('/super-admin/settings');
+      const d = unwrap(res);
+      setSettingsData({ platformName: d.platformName || 'GrandHR', supportEmail: d.supportEmail || 'support@grandhr.in', defaultTrialDays: d.defaultTrialDays || 14 });
+    } catch { /* use defaults */ }
   };
 
   // ── Tab change → fetch data ───────────────────────────────
@@ -409,6 +460,7 @@ const SuperAdminDashboard = () => {
       case 'subscriptions': fetchSubscriptions(); break;
       case 'documents': fetchDocuments(); break;
       case 'activity': fetchActivityLogs(1); break;
+      case 'settings': fetchSettings(); break;
       default: break;
     }
   }, [activeTab]);
@@ -454,9 +506,19 @@ const SuperAdminDashboard = () => {
 
   // ── Overview ──────────────────────────────────────────────
   const renderOverview = () => {
-    const stats = dashboardData?.stats || dashboardData || {};
-    const recentCompanies = dashboardData?.recentCompanies || [];
-    const recentActivity = dashboardData?.recentActivity || [];
+    const d = dashboardData || {};
+    const stats = {
+      totalCompanies: d.companies?.total ?? 0,
+      activeCompanies: d.companies?.active ?? 0,
+      inactiveCompanies: d.companies?.inactive ?? 0,
+      totalUsers: d.users?.total ?? 0,
+      totalEmployees: d.employees?.total ?? 0,
+      totalSubscriptions: d.revenue?.totalSubscriptions ?? 0,
+      activeSubscriptions: d.revenue?.activeSubscriptions ?? 0,
+      newCompaniesThisMonth: d.growth?.newCompaniesThisMonth ?? 0,
+      newUsersThisMonth: d.growth?.newUsersThisMonth ?? 0,
+    };
+    const recentActivity = d.recentActivity || [];
 
     if (loading && !dashboardData) {
       return (
@@ -494,12 +556,8 @@ const SuperAdminDashboard = () => {
                 {icons.users}
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.totalUsers ?? 0}</p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 flex-wrap">
-              {stats.roleBreakdown ? Object.entries(stats.roleBreakdown).map(([role, count]) => (
-                <span key={role} className="flex items-center gap-1">{count} {role.toLowerCase().replace('_', ' ')}</span>
-              )) : <span>—</span>}
-            </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalUsers}</p>
+            <p className="text-xs text-gray-500 mt-2">+{stats.newUsersThisMonth} this month</p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -517,17 +575,13 @@ const SuperAdminDashboard = () => {
 
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-500">Revenue</span>
+              <span className="text-sm font-medium text-gray-500">Subscriptions</span>
               <span className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                {icons.subscriptions}
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">
-              ${stats.revenue?.toLocaleString?.() ?? stats.monthlyRevenue?.toLocaleString?.() ?? '0'}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">{stats.activeSubscriptions ?? 0} active subscriptions</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalSubscriptions}</p>
+            <p className="text-xs text-gray-500 mt-2">{stats.activeSubscriptions} active</p>
           </div>
         </div>
 
@@ -554,34 +608,19 @@ const SuperAdminDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Recent Companies */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700">Recent Companies</h3>
-              <button onClick={() => setActiveTab('companies')} className="text-xs text-indigo-600 font-medium hover:underline">View All</button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <th className="px-6 py-3">Company</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Created</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {recentCompanies.length > 0 ? recentCompanies.slice(0, 10).map((c) => (
-                    <tr key={c._id || c.id} className="hover:bg-gray-50/50 transition">
-                      <td className="px-6 py-3 font-medium text-gray-800">{c.companyName || c.name}</td>
-                      <td className="px-6 py-3"><StatusBadge active={c.isActive !== false} /></td>
-                      <td className="px-6 py-3 text-gray-500">{formatDate(c.createdAt)}</td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-400">No companies yet</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          {/* Growth This Month */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Growth This Month</h3>
+            {[
+              ['New Companies', stats.newCompaniesThisMonth],
+              ['New Users', stats.newUsersThisMonth],
+            ].map(([label, val]) => (
+              <div key={label} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <span className="text-sm text-gray-600">{label}</span>
+                <span className="text-lg font-bold text-gray-900">+{val}</span>
+              </div>
+            ))}
+            <button onClick={() => setActiveTab('companies')} className="text-xs text-indigo-600 font-medium hover:underline">View All Companies</button>
           </div>
 
           {/* Recent Activity */}
@@ -592,16 +631,16 @@ const SuperAdminDashboard = () => {
             </div>
             <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
               {recentActivity.length > 0 ? recentActivity.slice(0, 20).map((a, i) => (
-                <div key={a._id || i} className="px-6 py-3 flex items-start gap-3 hover:bg-gray-50/50 transition">
+                <div key={a.id || i} className="px-6 py-3 flex items-start gap-3 hover:bg-gray-50/50 transition">
                   <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-indigo-600 text-xs font-bold">{(a.user?.name || a.userName || '?')[0]?.toUpperCase()}</span>
+                    <span className="text-indigo-600 text-xs font-bold">{(a.user?.email || '?')[0]?.toUpperCase()}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-800 truncate">
-                      <span className="font-medium">{a.user?.name || a.userName || 'System'}</span>{' '}
-                      <span className="text-gray-500">{a.action || a.description}</span>
+                      <span className="font-medium">{a.user?.email || 'System'}</span>{' '}
+                      <span className="text-gray-500">{a.action}</span>
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(a.createdAt || a.timestamp)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(a.createdAt)}</p>
                   </div>
                 </div>
               )) : (
@@ -670,33 +709,33 @@ const SuperAdminDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {companies.length > 0 ? companies.map((c) => (
-                    <tr key={c._id || c.id} className="hover:bg-gray-50/50 transition">
-                      <td className="px-6 py-4 font-medium text-gray-800">{c.companyName || c.name}</td>
-                      <td className="px-6 py-4 text-gray-500">{c.email || c.companyEmail || '—'}</td>
-                      <td className="px-6 py-4 text-gray-600">{c.employeeCount ?? c.totalEmployees ?? '—'}</td>
+                    <tr key={c.id} className="hover:bg-gray-50/50 transition">
+                      <td className="px-6 py-4 font-medium text-gray-800">{c.name}</td>
+                      <td className="px-6 py-4 text-gray-500">{c.email || '—'}</td>
+                      <td className="px-6 py-4 text-gray-600">{c._count?.employees ?? '—'}</td>
                       <td className="px-6 py-4"><StatusBadge active={c.isActive !== false} /></td>
                       <td className="px-6 py-4">
                         <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                          {c.subscription?.plan || c.plan || 'Free'}
+                          {c.subscription?.plan?.name || 'Free'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-500">{formatDate(c.createdAt)}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => toggleCompany(c._id || c.id)}
+                            onClick={() => toggleCompany(c.id)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${c.isActive !== false ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
                           >
                             {c.isActive !== false ? 'Deactivate' : 'Activate'}
                           </button>
                           <button
-                            onClick={() => fetchCompanyDetail(c._id || c.id)}
+                            onClick={() => fetchCompanyDetail(c.id)}
                             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
                           >
                             View
                           </button>
                           <button
-                            onClick={() => deleteCompany(c._id || c.id, c.companyName || c.name)}
+                            onClick={() => deleteCompany(c.id, c.name)}
                             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
                           >
                             Delete
@@ -728,35 +767,37 @@ const SuperAdminDashboard = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  ['Company Name', selectedCompany.companyName || selectedCompany.name],
-                  ['Email', selectedCompany.email || selectedCompany.companyEmail],
-                  ['Phone', selectedCompany.phone || selectedCompany.companyPhone],
+                  ['Company Name', selectedCompany.name],
+                  ['Email', selectedCompany.email],
+                  ['Phone', selectedCompany.phone],
                   ['Industry', selectedCompany.industry],
-                  ['Address', selectedCompany.address],
+                  ['Domain', selectedCompany.domain],
                   ['Status', selectedCompany.isActive !== false ? 'Active' : 'Inactive'],
-                  ['Employees', selectedCompany.employeeCount ?? selectedCompany.totalEmployees],
-                  ['Subscription', selectedCompany.subscription?.plan || selectedCompany.plan || 'Free'],
+                  ['Employees', selectedCompany.stats?.employeeCount],
+                  ['Users', selectedCompany.stats?.userCount],
+                  ['Active Leaves Today', selectedCompany.stats?.activeLeaves],
+                  ['Attendance Today', selectedCompany.stats?.attendanceToday],
+                  ['Subscription', selectedCompany.subscription?.plan?.name || 'Free'],
                   ['Created', formatDate(selectedCompany.createdAt)],
-                  ['Last Updated', formatDate(selectedCompany.updatedAt)],
                 ].map(([label, value]) => (
                   <div key={label}>
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-                    <p className="mt-1 text-sm text-gray-800">{value || '—'}</p>
+                    <p className="mt-1 text-sm text-gray-800">{value ?? '—'}</p>
                   </div>
                 ))}
               </div>
-              {selectedCompany.admins && selectedCompany.admins.length > 0 && (
+              {selectedCompany.users && selectedCompany.users.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Company Admins</h4>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Users</h4>
                   <div className="space-y-2">
-                    {selectedCompany.admins.map((admin, i) => (
-                      <div key={admin._id || i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    {selectedCompany.users.map((u, i) => (
+                      <div key={u.id || i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold">
-                          {(admin.name || 'A')[0].toUpperCase()}
+                          {(u.email || 'U')[0].toUpperCase()}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{admin.name}</p>
-                          <p className="text-xs text-gray-500">{admin.email}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800">{u.email}</p>
+                          <p className="text-xs text-gray-500">{u.role} &middot; {u.isActive ? 'Active' : 'Inactive'}</p>
                         </div>
                       </div>
                     ))}
@@ -826,22 +867,24 @@ const SuperAdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {users.length > 0 ? users.map((u) => (
-                    <tr key={u._id || u.id} className="hover:bg-gray-50/50 transition">
+                  {users.length > 0 ? users.map((u) => {
+                    const displayName = u.employee ? `${u.employee.firstName || ''} ${u.employee.lastName || ''}`.trim() : u.email;
+                    return (
+                    <tr key={u.id} className="hover:bg-gray-50/50 transition">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {(u.name || 'U')[0].toUpperCase()}
+                            {(displayName || 'U')[0].toUpperCase()}
                           </div>
-                          <span className="font-medium text-gray-800">{u.name}</span>
+                          <span className="font-medium text-gray-800">{displayName}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-500">{u.email}</td>
-                      <td className="px-6 py-4 text-gray-600">{u.company?.companyName || u.companyName || '—'}</td>
+                      <td className="px-6 py-4 text-gray-600">{u.company?.name || '—'}</td>
                       <td className="px-6 py-4">
                         <select
                           value={u.role}
-                          onChange={(e) => changeUserRole(u._id || u.id, e.target.value)}
+                          onChange={(e) => changeUserRole(u.id, e.target.value)}
                           className="px-2 py-1 border border-gray-200 rounded-md text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                         >
                           {ROLE_OPTIONS.map((r) => (
@@ -854,7 +897,13 @@ const SuperAdminDashboard = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => toggleUser(u._id || u.id)}
+                            onClick={() => { setResetPwModal(u); setResetPwValue(''); }}
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-50 text-violet-700 hover:bg-violet-100 transition"
+                          >
+                            Reset PW
+                          </button>
+                          <button
+                            onClick={() => toggleUser(u.id)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${u.isActive !== false ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
                           >
                             {u.isActive !== false ? 'Deactivate' : 'Activate'}
@@ -862,7 +911,8 @@ const SuperAdminDashboard = () => {
                         </div>
                       </td>
                     </tr>
-                  )) : (
+                    );
+                  }) : (
                     <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400">No users found</td></tr>
                   )}
                 </tbody>
@@ -872,6 +922,32 @@ const SuperAdminDashboard = () => {
         </div>
 
         <Pagination page={usersPage} totalPages={usersTotalPages} onPageChange={(p) => fetchUsers(p)} />
+
+        {/* Reset Password Modal */}
+        <Modal open={!!resetPwModal} onClose={() => setResetPwModal(null)} title={`Reset Password — ${resetPwModal?.email || ''}`}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <input
+                type="password"
+                value={resetPwValue}
+                onChange={(e) => setResetPwValue(e.target.value)}
+                placeholder="Min 6 characters"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setResetPwModal(null)} className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+              <button
+                onClick={() => resetPwValue.length >= 6 && resetUserPassword(resetPwModal.id, resetPwValue)}
+                disabled={resetPwValue.length < 6}
+                className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Reset Password
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   };
@@ -879,12 +955,12 @@ const SuperAdminDashboard = () => {
   // ── Subscriptions ─────────────────────────────────────────
   const renderSubscriptions = () => {
     const filteredSubs = subscriptions.filter((s) => {
-      if (subsPlanFilter && (s.plan || s.subscription?.plan || '') !== subsPlanFilter) return false;
+      if (subsPlanFilter && (s.plan?.name || '') !== subsPlanFilter) return false;
       if (subsStatusFilter && (s.status || '') !== subsStatusFilter) return false;
       return true;
     });
 
-    const planTypes = [...new Set(subscriptions.map((s) => s.plan || s.subscription?.plan).filter(Boolean))];
+    const planTypes = [...new Set(subscriptions.map((s) => s.plan?.name).filter(Boolean))];
     const statusTypes = [...new Set(subscriptions.map((s) => s.status).filter(Boolean))];
 
     return (
@@ -934,21 +1010,21 @@ const SuperAdminDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredSubs.length > 0 ? filteredSubs.map((s, i) => (
-                    <tr key={s._id || i} className="hover:bg-gray-50/50 transition">
-                      <td className="px-6 py-4 font-medium text-gray-800">{s.company?.companyName || s.companyName || '—'}</td>
+                    <tr key={s.id || i} className="hover:bg-gray-50/50 transition">
+                      <td className="px-6 py-4 font-medium text-gray-800">{s.company?.name || '—'}</td>
                       <td className="px-6 py-4">
                         <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                          {s.plan || s.subscription?.plan || '—'}
+                          {s.plan?.name || '—'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge
-                          active={s.status === 'active' || s.status === 'Active'}
+                          active={s.status === 'ACTIVE'}
                           label={s.status || '—'}
                         />
                       </td>
-                      <td className="px-6 py-4 text-gray-600">{s.employeeCount ?? s.employees ?? '—'}</td>
-                      <td className="px-6 py-4 font-medium text-gray-800">${s.monthlyTotal?.toLocaleString?.() ?? s.amount?.toLocaleString?.() ?? '0'}</td>
+                      <td className="px-6 py-4 text-gray-600">{s.employeeCount ?? '—'}</td>
+                      <td className="px-6 py-4 font-medium text-gray-800">{s.plan?.pricePerEmployee ? `$${s.plan.pricePerEmployee}/emp` : '—'}</td>
                       <td className="px-6 py-4 text-gray-500">{formatDate(s.startDate || s.createdAt)}</td>
                     </tr>
                   )) : (
@@ -1007,15 +1083,15 @@ const SuperAdminDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredDocs.length > 0 ? filteredDocs.map((d, i) => (
-                    <tr key={d._id || i} className="hover:bg-gray-50/50 transition">
+                    <tr key={d.id || i} className="hover:bg-gray-50/50 transition">
                       <td className="px-6 py-4">
                         <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
                           {d.documentType || d.type || '—'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-gray-800">{d.title || d.name || '—'}</td>
-                      <td className="px-6 py-4 text-gray-600">{d.company?.companyName || d.companyName || '—'}</td>
-                      <td className="px-6 py-4 text-gray-600">{d.employee?.name || d.employeeName || '—'}</td>
+                      <td className="px-6 py-4 font-medium text-gray-800">{d.title || '—'}</td>
+                      <td className="px-6 py-4 text-gray-600">—</td>
+                      <td className="px-6 py-4 text-gray-600">{d.employee ? `${d.employee.firstName || ''} ${d.employee.lastName || ''}`.trim() : '—'}</td>
                       <td className="px-6 py-4 text-gray-500">{formatDate(d.createdAt)}</td>
                     </tr>
                   )) : (
@@ -1069,14 +1145,16 @@ const SuperAdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {activityLogs.length > 0 ? activityLogs.map((a, i) => (
-                    <tr key={a._id || i} className="hover:bg-gray-50/50 transition">
+                  {activityLogs.length > 0 ? activityLogs.map((a, i) => {
+                    const userName = a.user?.employee ? `${a.user.employee.firstName || ''} ${a.user.employee.lastName || ''}`.trim() : (a.user?.email || 'System');
+                    return (
+                    <tr key={a.id || i} className="hover:bg-gray-50/50 transition">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                            {(a.user?.name || a.userName || '?')[0]?.toUpperCase()}
+                            {(userName || '?')[0]?.toUpperCase()}
                           </div>
-                          <span className="font-medium text-gray-800 text-sm">{a.user?.name || a.userName || 'System'}</span>
+                          <span className="font-medium text-gray-800 text-sm">{userName}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -1086,9 +1164,10 @@ const SuperAdminDashboard = () => {
                       </td>
                       <td className="px-6 py-4 text-gray-600">{a.entity || a.entityType || '—'}</td>
                       <td className="px-6 py-4 text-gray-500 max-w-xs truncate">{a.description || a.details || '—'}</td>
-                      <td className="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">{formatDateTime(a.createdAt || a.timestamp)}</td>
+                      <td className="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">{formatDateTime(a.createdAt)}</td>
                     </tr>
-                  )) : (
+                    );
+                  }) : (
                     <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400">No activity logs found</td></tr>
                   )}
                 </tbody>
@@ -1113,7 +1192,8 @@ const SuperAdminDashboard = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Platform Name</label>
               <input
                 type="text"
-                defaultValue="GrandHR"
+                value={settingsData.platformName}
+                onChange={(e) => setSettingsData({ ...settingsData, platformName: e.target.value })}
                 className="w-full max-w-md px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
               />
             </div>
@@ -1121,7 +1201,8 @@ const SuperAdminDashboard = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
               <input
                 type="email"
-                defaultValue="support@grandhr.com"
+                value={settingsData.supportEmail}
+                onChange={(e) => setSettingsData({ ...settingsData, supportEmail: e.target.value })}
                 className="w-full max-w-md px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
               />
             </div>
@@ -1129,13 +1210,14 @@ const SuperAdminDashboard = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Default Trial Period (days)</label>
               <input
                 type="number"
-                defaultValue={14}
+                value={settingsData.defaultTrialDays}
+                onChange={(e) => setSettingsData({ ...settingsData, defaultTrialDays: parseInt(e.target.value) || 0 })}
                 className="w-full max-w-md px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
               />
             </div>
           </div>
           <div className="mt-6">
-            <button className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+            <button onClick={saveSettings} className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
               Save Settings
             </button>
           </div>
@@ -1145,11 +1227,10 @@ const SuperAdminDashboard = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Account</h3>
           <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xl font-bold">
-              {(hrUser?.name || 'S')[0].toUpperCase()}
+              {(hrUser?.email || 'S')[0].toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold text-gray-900">{hrUser?.name || 'Super Admin'}</p>
-              <p className="text-sm text-gray-500">{hrUser?.email}</p>
+              <p className="font-semibold text-gray-900">{hrUser?.email || 'Super Admin'}</p>
               <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 mt-1">
                 {hrUser?.role}
               </span>
@@ -1161,11 +1242,8 @@ const SuperAdminDashboard = () => {
           <h3 className="text-lg font-semibold text-red-600 mb-2">Danger Zone</h3>
           <p className="text-sm text-gray-500 mb-4">Irreversible actions. Proceed with extreme caution.</p>
           <div className="flex flex-wrap gap-3">
-            <button className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition">
-              Clear All Logs
-            </button>
-            <button className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition">
-              Reset Platform Stats
+            <button onClick={clearAllLogs} className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition">
+              Clear All Activity Logs
             </button>
           </div>
         </div>

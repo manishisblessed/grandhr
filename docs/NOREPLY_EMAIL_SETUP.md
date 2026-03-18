@@ -17,8 +17,8 @@ You have your domain and Gmail (Google Workspace) set up. To send transactional 
 **Step 2 – App password (if 2-Step Verification is on)**
 
 1. Go to [Google Account → Security](https://myaccount.google.com/security).
-2. Under “How you sign in to Google”, turn on **2-Step Verification** if not already.
-3. **App passwords** → Select app: “Mail”, device: “Other” → name it “GrandHR Backend”.
+2. Under "How you sign in to Google", turn on **2-Step Verification** if not already.
+3. **App passwords** → Select app: "Mail", device: "Other" → name it "GrandHR Backend".
 4. Copy the 16-character password.
 
 **Step 3 – Backend `.env` (in `backend/`)**
@@ -42,12 +42,12 @@ SMTP_PASS=your_app_password
 EMAIL_FROM=noreply@grandhr.in
 ```
 
-**Step 4 – “Send mail as” in Gmail (optional, for sending as noreply)**
+**Step 4 – "Send mail as" in Gmail (optional, for sending as noreply)**
 
 - Gmail → **Settings** → **Accounts** → **Send mail as** → Add **noreply@grandhr.in** and set as default if you want.
-- For the **backend**, the important part is `EMAIL_FROM=noreply@grandhr.in`; Nodemailer will use that as the “From” address.
+- For the **backend**, the important part is `EMAIL_FROM=noreply@grandhr.in`; Nodemailer will use that as the "From" address.
 
-**Step 5 – Reduce “spam” risk**
+**Step 5 – Reduce "spam" risk**
 
 - Add SPF (and ideally DKIM) for **grandhr.in** in your DNS (Google Admin / Domain setup usually gives you the records).
 - Avoid sending high volume from a free Gmail account; for large volume later, use SendGrid/AWS SES (see Option B).
@@ -58,7 +58,7 @@ EMAIL_FROM=noreply@grandhr.in
 
 When you need higher volume or better deliverability:
 
-- **SendGrid / Mailgun / AWS SES**: Create a domain identity for **grandhr.in**, verify DNS, then send via API/SMTP with “From: noreply@grandhr.in”.
+- **SendGrid / Mailgun / AWS SES**: Create a domain identity for **grandhr.in**, verify DNS, then send via API/SMTP with "From: noreply@grandhr.in".
 - Backend stays the same idea: set `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, and `EMAIL_FROM=noreply@grandhr.in` to point to that service.
 
 ---
@@ -66,9 +66,9 @@ When you need higher volume or better deliverability:
 ## 2. What we use noreply for (already in code)
 
 - **Password reset** – link to `/reset-password?token=...`
-- **Forgot username** – sends login details to the user’s email
+- **Forgot username** – sends login details to the user's email
 - **Password changed confirmation**
-- Any future transactional mail (e.g. welcome, leave approved) should also use `EMAIL_FROM=noreply@grandhr.in` so users see “GrandHR (noreply@grandhr.in)”.
+- Any future transactional mail (e.g. welcome, leave approved) should also use `EMAIL_FROM=noreply@grandhr.in` so users see "GrandHR (noreply@grandhr.in)".
 
 ---
 
@@ -81,7 +81,7 @@ After noreply is sending correctly, start with these in order:
 | 1 | **noreply email** | Password reset and account recovery must work for production | `backend/.env`, `backend/src/utils/email.util.ts` |
 | 2 | **Payment gateway (Razorpay/Stripe)** | Enables revenue; plans/subscriptions already in DB | New: `backend` billing routes, `frontend` pricing/checkout |
 | 3 | **Bulk employee import (CSV/Excel)** | Fast onboarding for companies; strong differentiator | New: upload API + parsing, `frontend` in Employees |
-| 4 | **PWA / Installable web app** | “Add to home screen”, works offline for key screens | `frontend`: manifest, service worker, icons |
+| 4 | **PWA / Installable web app** | "Add to home screen", works offline for key screens | `frontend`: manifest, service worker, icons |
 | 5 | **Multi-language (Hindi + English)** | Important for Indian MNCs | i18n library + JSON keys, language switcher in navbar |
 
 Suggested order: **1 (noreply) → 2 (payments) → 3 (bulk import)**. Then PWA and i18n.
@@ -90,16 +90,14 @@ Suggested order: **1 (noreply) → 2 (payments) → 3 (bulk import)**. Then PWA 
 
 ## 4. Login and SUPER_ADMIN checklist
 
-If **super_admin@grandhr.in** / **GrandHR@2026** fails:
+If super admin login fails:
 
 1. **Backend running** – e.g. `npm run dev` in `backend/`, listening on port 5000.
 2. **Frontend API URL** – In `frontend/.env`:  
    `VITE_API_URL=http://localhost:5000/api` (local) or your production API URL.
 3. **Same database** – Seed runs against `backend/.env` `DATABASE_URL`. If frontend points to production API, the user must exist in that DB.
-4. **Re-run seed** – In `backend/`:  
-   `npm run seed`  
-   This creates/updates SUPER_ADMIN with the password above.
-5. **See password** – On `/hr/login` use the “eye” icon next to the password field to confirm you’re typing **GrandHR@2026** (no extra spaces).
+4. **Re-run seed** – Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` in `backend/.env`, then run `npm run seed` in `backend/`.
+5. **Reset password** – A SUPER_ADMIN can reset any user's password from the Super Admin dashboard (Users tab → Reset Password).
 
 ---
 
