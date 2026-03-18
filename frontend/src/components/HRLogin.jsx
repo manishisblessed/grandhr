@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import Layout from './Layout';
 
@@ -11,6 +12,7 @@ const HRLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const { showSuccess, showError } = useToast();
 
   const handleSubmit = async (e) => {
@@ -32,9 +34,10 @@ const HRLogin = () => {
         return;
       }
 
-      // Store HR auth in localStorage
+      // Store HR auth in localStorage AND update AuthContext so protected routes work
       localStorage.setItem('hr_token', token);
       localStorage.setItem('hr_user', JSON.stringify(user));
+      setUser(user);
 
       showSuccess(`Welcome back, ${user?.employee?.firstName || user?.email}!`);
       

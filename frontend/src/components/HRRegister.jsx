@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 import Layout from './Layout';
 
 const HRRegister = () => {
@@ -16,6 +17,7 @@ const HRRegister = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,9 +40,10 @@ const HRRegister = () => {
       const response = await api.post('/auth/register', registerData);
       const { user, token } = response.data;
       
-      // Store HR auth
+      // Store HR auth and update AuthContext
       localStorage.setItem('hr_token', token);
       localStorage.setItem('hr_user', JSON.stringify(user));
+      setUser(user);
       
       navigate('/hr/dashboard');
     } catch (err) {

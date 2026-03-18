@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 import Layout from './Layout';
 import { COUNTRIES, STATES_BY_COUNTRY } from '../data/countriesAndStates';
 
@@ -10,6 +11,7 @@ const CompanyOnboarding = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const [companyData, setCompanyData] = useState({
     // Company Information
@@ -160,10 +162,11 @@ const CompanyOnboarding = () => {
 
       const { company, user, token } = response.data;
 
-      // Store auth tokens
+      // Store auth tokens and update AuthContext
       localStorage.setItem('hr_token', token);
       localStorage.setItem('hr_user', JSON.stringify(user));
       localStorage.setItem('hr_company', JSON.stringify(company));
+      setUser(user);
 
       setSuccess('Company registered successfully! Redirecting to dashboard...');
       
