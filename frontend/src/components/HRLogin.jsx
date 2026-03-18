@@ -20,12 +20,22 @@ const HRLogin = () => {
 
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user, token } = response.data;
-      
+      const { user, token } = response.data || {};
+
+      // Only treat as success when we have a 2xx response with token and user
+      const ok = response.status >= 200 && response.status < 300 && token && user;
+      if (!ok) {
+        const msg = response.data?.message || 'Login failed. Please check your credentials.';
+        setError(msg);
+        showError(msg);
+        setLoading(false);
+        return;
+      }
+
       // Store HR auth in localStorage
       localStorage.setItem('hr_token', token);
       localStorage.setItem('hr_user', JSON.stringify(user));
-      
+
       showSuccess(`Welcome back, ${user?.employee?.firstName || user?.email}!`);
       
       // Navigate based on role
