@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
-import { formatDate } from '../utils/pdfUtils';
+import { formatDate, addCompanyLetterheadPdf } from '../utils/pdfUtils';
+import { companyLetterheadHtml } from '../utils/letterheadHtml';
 import { jsPDF } from 'jspdf';
+import api from '../utils/api';
+import { useToast } from '../contexts/ToastContext';
 
 const RelievingLetter = () => {
   const [companies, setCompanies] = useState([]);
@@ -10,10 +13,13 @@ const RelievingLetter = () => {
   const [showCompanyManager, setShowCompanyManager] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
+  const [emailTo, setEmailTo] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState({
-    company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '' },
-    employee: { name: '', id: '', designation: '', department: '' },
+    company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '', logoImage: null },
+    employee: { name: '', id: '', designation: '', department: '', email: '' },
     employment: { joiningDate: '', relievingDate: '', letterDate: '', reasonForLeaving: '' }
   });
 
@@ -55,11 +61,58 @@ const RelievingLetter = () => {
     }));
   };
 
+  const handleCompanyLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      handleInputChange('company', 'logoImage', null);
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size should be less than 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => handleInputChange('company', 'logoImage', ev.target?.result || null);
+    reader.readAsDataURL(file);
+  };
+
+  const handleEmailLetter = async () => {
+    const recipientEmail = emailTo.trim() || formData.employee.email?.trim();
+    if (!recipientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      showError('Please enter a valid employee email address');
+      return;
+    }
+    const data = { ...formData, company: currentCompany || formData.company };
+    if (!data.employee.name) {
+      showError('Please fill employee name before sending');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const htmlContent = generateRelievingLetterHTML(data);
+      const subject = `Relieving Letter - ${data.company.name || 'Company'}`;
+      await api.post('/generated-documents/send-email', {
+        toEmail: recipientEmail,
+        subject,
+        htmlContent,
+      });
+      showSuccess(`Relieving letter sent to ${recipientEmail}`);
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const handleCompanySelect = (value) => {
     if (value === 'new') {
       setShowCompanyForm(true);
       setCurrentCompany(null);
-      setFormData(prev => ({ ...prev, company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '' } }));
+      setFormData(prev => ({ ...prev, company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '', logoImage: null } }));
     } else if (value !== '') {
       const company = companies[parseInt(value)];
       setCurrentCompany(company);
@@ -79,7 +132,8 @@ const RelievingLetter = () => {
     const company = {
       name, address: formData.company.address.trim(), email: formData.company.email.trim(),
       phone: formData.company.phone.trim(), signatory: formData.company.signatory.trim(),
-      designation: formData.company.designation.trim()
+      designation: formData.company.designation.trim(),
+      logoImage: formData.company.logoImage || null
     };
     let updatedCompanies;
     if (currentCompany && companies.findIndex(c => c.name === currentCompany.name) !== -1) {
@@ -120,20 +174,16 @@ const RelievingLetter = () => {
     const tenure = calculateTenure(data.employment.joiningDate, data.employment.relievingDate);
     return `
       <div class="space-y-6 text-sm leading-relaxed">
+        ${companyLetterheadHtml(data.company)}
         <h1 class="text-2xl font-bold text-center text-primary-600 mb-6">RELIEVING LETTER</h1>
-        <div class="text-right space-y-1">
-          <div class="font-bold">${data.company.name || 'Company Name'}</div>
-          ${data.company.address ? `<div>${data.company.address.replace(/\n/g, '<br>')}</div>` : ''}
-          ${data.company.email ? `<div>Email: ${data.company.email}</div>` : ''}
-          ${data.company.phone ? `<div>Phone: ${data.company.phone}</div>` : ''}
-        </div>
         <div><strong>Date:</strong> ${letterDate}</div>
         <div class="space-y-1">
           <strong>To,</strong><br>
           ${data.employee.name || 'Employee Name'}<br>
           ${data.employee.id ? `Employee ID: ${data.employee.id}<br>` : ''}
           ${data.employee.designation ? `Designation: ${data.employee.designation}<br>` : ''}
-          ${data.employee.department ? `Department: ${data.employee.department}` : ''}
+          ${data.employee.department ? `Department: ${data.employee.department}<br>` : ''}
+          ${data.employee.email ? `Email: ${data.employee.email}` : ''}
         </div>
         <div class="font-semibold text-primary-600 my-4">
           <strong>Subject: Relieving Letter - ${data.employee.name || 'Employee'}</strong>
@@ -198,13 +248,9 @@ const RelievingLetter = () => {
       doc.setLineWidth(0.5);
       doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
 
+      yPos = addCompanyLetterheadPdf(doc, data.company, margin, pageWidth, margin);
       addText('RELIEVING LETTER', 18, true, 'center');
       yPos += 10;
-      addText(data.company.name || 'Company Name', 14, true, 'right');
-      if (data.company.address) addText(data.company.address, 10, false, 'right');
-      if (data.company.email) addText(`Email: ${data.company.email}`, 10, false, 'right');
-      if (data.company.phone) addText(`Phone: ${data.company.phone}`, 10, false, 'right');
-      yPos += 5;
       addText(`Date: ${formatDate(data.employment.letterDate)}`, 12, false, 'left');
       yPos += 5;
       addText('To,', 12, true);
@@ -212,6 +258,7 @@ const RelievingLetter = () => {
       if (data.employee.id) addText(`Employee ID: ${data.employee.id}`, 10);
       if (data.employee.designation) addText(`Designation: ${data.employee.designation}`, 10);
       if (data.employee.department) addText(`Department: ${data.employee.department}`, 10);
+      if (data.employee.email) addText(`Email: ${data.employee.email}`, 10);
       yPos += 5;
       addText(`Subject: Relieving Letter - ${data.employee.name || 'Employee'}`, 12, true);
       yPos += 5;
@@ -253,8 +300,8 @@ const RelievingLetter = () => {
   const clearForm = () => {
     if (confirm('Are you sure you want to clear all fields?')) {
       setFormData({
-        company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '' },
-        employee: { name: '', id: '', designation: '', department: '' },
+        company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '', logoImage: null },
+        employee: { name: '', id: '', designation: '', department: '', email: '' },
         employment: { joiningDate: '', relievingDate: '', letterDate: '', reasonForLeaving: '' }
       });
       const today = new Date();
@@ -263,6 +310,7 @@ const RelievingLetter = () => {
         employment: { ...prev.employment, letterDate: today.toISOString().split('T')[0] }
       }));
       setPreviewVisible(false);
+      setEmailTo('');
     }
   };
 
@@ -301,6 +349,16 @@ const RelievingLetter = () => {
                     <input type="text" className="form-input" value={formData.company.name} onChange={(e) => handleInputChange('company', 'name', e.target.value)} placeholder="Company Name" /></div>
                   <div><label className="form-label">Address:</label>
                     <textarea rows="3" className="form-input" value={formData.company.address} onChange={(e) => handleInputChange('company', 'address', e.target.value)} placeholder="Full address" /></div>
+                  <div>
+                    <label className="form-label">Company Logo (optional):</label>
+                    <input type="file" accept="image/*" className="form-input" onChange={handleCompanyLogoUpload} />
+                    {formData.company.logoImage && (
+                      <div className="mt-2 flex items-center gap-3">
+                        <img src={formData.company.logoImage} alt="" className="max-h-16 object-contain border rounded p-1 bg-white" />
+                        <button type="button" className="text-sm text-red-600 font-medium" onClick={() => handleInputChange('company', 'logoImage', null)}>Remove logo</button>
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className="form-label">Email:</label>
                       <input type="email" className="form-input" value={formData.company.email} onChange={(e) => handleInputChange('company', 'email', e.target.value)} placeholder="hr@company.com" /></div>
@@ -337,6 +395,8 @@ const RelievingLetter = () => {
                 <input type="text" className="form-input" value={formData.employee.designation} onChange={(e) => handleInputChange('employee', 'designation', e.target.value)} placeholder="e.g., Software Developer" required /></div>
               <div><label className="form-label">Department:</label>
                 <input type="text" className="form-input" value={formData.employee.department} onChange={(e) => handleInputChange('employee', 'department', e.target.value)} placeholder="e.g., Engineering" /></div>
+              <div><label className="form-label">Employee Email (for sending letter):</label>
+                <input type="email" className="form-input" value={formData.employee.email} onChange={(e) => handleInputChange('employee', 'email', e.target.value)} placeholder="employee@example.com" /></div>
             </div>
           </div>
 
@@ -363,7 +423,7 @@ const RelievingLetter = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button type="button" className="btn-primary flex-1 text-lg py-4" onClick={generatePreview}>Generate Letter</button>
-            <button type="button" className="btn-secondary flex-1 py-4" onClick={() => setPreviewVisible(false)}>Preview</button>
+            <button type="button" className="btn-secondary flex-1 py-4" onClick={generatePreview}>Preview</button>
             <button type="button" className="btn-secondary flex-1 py-4" onClick={clearForm}>Clear</button>
           </div>
         </div>
@@ -374,6 +434,26 @@ const RelievingLetter = () => {
             <div className="card shadow-2xl">
               <h2 className="section-title mb-4">Preview</h2>
               <div className="preview-content bg-white p-6 rounded-lg border-2 border-gray-200 max-h-[calc(100vh-200px)] overflow-y-auto" dangerouslySetInnerHTML={{ __html: previewContent }} />
+              <div className="border-t border-gray-200 pt-4 mt-4 space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Email to employee</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    className="form-input flex-1"
+                    placeholder="employee@example.com"
+                    value={emailTo || formData.employee.email || ''}
+                    onChange={(e) => setEmailTo(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary whitespace-nowrap px-6 disabled:opacity-50"
+                    onClick={handleEmailLetter}
+                    disabled={sendingEmail}
+                  >
+                    {sendingEmail ? 'Sending…' : 'Send to email'}
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
                 <button type="button" className="btn-primary flex-1" onClick={downloadPDF}>Download PDF</button>
                 <button type="button" className="btn-secondary flex-1" onClick={() => setPreviewVisible(false)}>Close</button>

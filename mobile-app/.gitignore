@@ -8,5 +8,9 @@ dist/
 *.mobileprovision
 *.orig.*
 web-build/
+.env
 .env.local
 .env.production
+google-service-account.json
+# Non-standard env filename (use .env + .env.example)
+env

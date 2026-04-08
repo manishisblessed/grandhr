@@ -15,6 +15,7 @@
     "build:production:android": "eas build --profile production --platform android",
     "build:production:ios": "eas build --profile production --platform ios",
     "submit:android": "eas submit --platform android --profile production",
+    "submit:android:internal": "eas submit --platform android --profile internal",
     "submit:ios": "eas submit --platform ios --profile production",
     "submit:all": "eas submit --platform all --profile production"
   },

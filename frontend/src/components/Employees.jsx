@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 import { useToast } from '../contexts/ToastContext';
 import HRLayout from './HRLayout';
@@ -26,7 +27,12 @@ const Employees = () => {
 
   const { showSuccess, showError, showWarning } = useToast();
   const hrUser = JSON.parse(localStorage.getItem('hr_user') || 'null');
-  const isHR = hrUser?.role === 'ADMIN' || hrUser?.role === 'HR' || hrUser?.role === 'MANAGER';
+  const isHR =
+    hrUser?.role === 'ADMIN' ||
+    hrUser?.role === 'HR' ||
+    hrUser?.role === 'MANAGER' ||
+    hrUser?.role === 'COMPANY_ADMIN';
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     fetchEmployees();
@@ -66,6 +72,15 @@ const Employees = () => {
       role: 'EMPLOYEE',
     });
   };
+
+  useEffect(() => {
+    if (!isHR || searchParams.get('add') !== '1') return;
+    resetForm();
+    setShowAddModal(true);
+    const q = new URLSearchParams(searchParams);
+    q.delete('add');
+    setSearchParams(q, { replace: true });
+  }, [isHR, searchParams, setSearchParams]);
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();

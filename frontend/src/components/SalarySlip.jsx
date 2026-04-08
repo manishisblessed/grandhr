@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
-import { formatDate, formatCurrency, numberToWords } from '../utils/pdfUtils';
+import { formatDate, formatCurrency, formatCurrencyPdf, numberToWords } from '../utils/pdfUtils';
 import { jsPDF } from 'jspdf';
+import api from '../utils/api';
+import { useToast } from '../contexts/ToastContext';
 
 const SalarySlip = () => {
   // Company state
@@ -24,6 +26,7 @@ const SalarySlip = () => {
     employee: {
       name: '',
       id: '',
+      email: '',
       designation: '',
       dateOfJoining: '',
       pan: '',
@@ -56,6 +59,9 @@ const SalarySlip = () => {
 
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
+  const [emailTo, setEmailTo] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   // Load companies on mount
   useEffect(() => {
@@ -228,6 +234,34 @@ const SalarySlip = () => {
     setPreviewVisible(true);
   };
 
+  const handleSendSalarySlip = async () => {
+    const recipientEmail = emailTo.trim() || formData.employee.email?.trim();
+    if (!recipientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      showError('Please enter a valid employee email address');
+      return;
+    }
+    const data = { ...formData, company: currentCompany || formData.company };
+    if (!data.company.name) {
+      showError('Please select or add a company');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const htmlContent = generateSalarySlipHTML(data);
+      const subject = `Salary Slip - ${data.period.payMonth} ${data.period.payYear} - ${data.company.name || 'Company'}`;
+      await api.post('/generated-documents/send-email', {
+        toEmail: recipientEmail,
+        subject,
+        htmlContent,
+      });
+      showSuccess(`Salary slip sent to ${recipientEmail}`);
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const generateSalarySlipHTML = (data) => {
     const payDateFormatted = data.period.payDate ? formatDate(data.period.payDate) : '';
     
@@ -247,6 +281,7 @@ const SalarySlip = () => {
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div><div class="font-semibold mb-1">Employee Name</div><div class="text-gray-700">${data.employee.name || 'N/A'}</div></div>
             <div><div class="font-semibold mb-1">Employee ID</div><div class="text-gray-700">${data.employee.id || 'N/A'}</div></div>
+            <div><div class="font-semibold mb-1">Email</div><div class="text-gray-700">${data.employee.email || 'N/A'}</div></div>
             <div><div class="font-semibold mb-1">UAN Number</div><div class="text-gray-700">${data.employee.uan || 'N/A'}</div></div>
             <div><div class="font-semibold mb-1">Pay Period</div><div class="text-gray-700">${data.period.payMonth} ${data.period.payYear}</div></div>
             <div><div class="font-semibold mb-1">Pay Date</div><div class="text-gray-700">${payDateFormatted || 'N/A'}</div></div>
@@ -410,7 +445,7 @@ const SalarySlip = () => {
       doc.text('EMPLOYEE SUMMARY', pageWidth / 2, yPos, { align: 'center' });
       yPos += 7;
 
-      const summaryBoxHeight = 45;
+      const summaryBoxHeight = 52;
       const summaryBoxY = yPos;
       doc.setFillColor(245, 245, 245);
       doc.rect(margin, summaryBoxY, contentWidth, summaryBoxHeight, 'F');
@@ -420,10 +455,11 @@ const SalarySlip = () => {
       const summaryData = [
         ['Employee Name', data.employee.name || 'N/A'],
         ['Employee ID', data.employee.id || 'N/A'],
+        ['Email', data.employee.email || 'N/A'],
         ['UAN Number', data.employee.uan || 'N/A'],
         ['Pay Period', `${data.period.payMonth} ${data.period.payYear}`],
         ['Pay Date', data.period.payDate ? formatDate(data.period.payDate) : 'N/A'],
-        ['Total Net Pay', formatCurrency(data.netPayable)],
+        ['Total Net Pay', formatCurrencyPdf(data.netPayable)],
         ['Paid Days', (data.period.paidDays || 0).toString()],
         ['LOP Days', (data.period.lopDays || 0).toString()]
       ];
@@ -449,8 +485,9 @@ const SalarySlip = () => {
 
         doc.setFont('times', isNetPay ? 'bold' : 'normal');
         doc.setFontSize(isNetPay ? 10 : 9);
-        doc.setTextColor(isNetPay ? [46, 125, 50] : [0, 0, 0]);
-        doc.text(value, xValue, y);
+        if (isNetPay) doc.setTextColor(46, 125, 50);
+        else doc.setTextColor(0, 0, 0);
+        doc.text(String(value), xValue, y);
       });
 
       yPos = summaryBoxY + summaryBoxHeight + 8;
@@ -462,11 +499,11 @@ const SalarySlip = () => {
       yPos += 6;
 
       const earnings = [
-        ['Basic', formatCurrency(data.earnings.basic)],
-        ['House Rent Allowance', formatCurrency(data.earnings.hra)],
-        ['Other Allowance', formatCurrency(data.earnings.otherAllowance)],
-        ['Special Allowance', formatCurrency(data.earnings.specialAllowance)],
-        ['Gross Earnings', formatCurrency(data.earnings.gross)]
+        ['Basic', formatCurrencyPdf(data.earnings.basic)],
+        ['House Rent Allowance', formatCurrencyPdf(data.earnings.hra)],
+        ['Other Allowance', formatCurrencyPdf(data.earnings.otherAllowance)],
+        ['Special Allowance', formatCurrencyPdf(data.earnings.specialAllowance)],
+        ['Gross Earnings', formatCurrencyPdf(data.earnings.gross)]
       ];
 
       const tableStartY = yPos;
@@ -512,9 +549,9 @@ const SalarySlip = () => {
       yPos += 6;
 
       const deductions = [
-        ['Provident Fund', formatCurrency(data.deductions.pf)],
-        ['PF Employer Share', formatCurrency(data.deductions.pfEmployerShare)],
-        ['Total Deductions', formatCurrency(data.deductions.total)]
+        ['Provident Fund', formatCurrencyPdf(data.deductions.pf)],
+        ['PF Employer Share', formatCurrencyPdf(data.deductions.pfEmployerShare)],
+        ['Total Deductions', formatCurrencyPdf(data.deductions.total)]
       ];
 
       const deductionsTableStartY = yPos;
@@ -571,12 +608,12 @@ const SalarySlip = () => {
 
       doc.setFontSize(16);
       doc.setTextColor(46, 125, 50);
-      doc.text(formatCurrency(data.netPayable), leftColX, leftColY + 8);
+      doc.text(formatCurrencyPdf(data.netPayable), leftColX, leftColY + 8);
 
       doc.setFontSize(8);
       doc.setFont('times', 'bold');
       doc.setTextColor(46, 100, 50);
-      const netWords = `Rupees ${numberToWords(data.netPayable)}`;
+      const netWords = `Rupees ${numberToWords(Math.round(Number(data.netPayable) || 0))}`;
       const wordsLines = doc.splitTextToSize(netWords, contentWidth * 0.45);
       wordsLines.forEach((line, index) => {
         doc.text(line, leftColX, leftColY + 16 + (index * 4));
@@ -589,10 +626,10 @@ const SalarySlip = () => {
       doc.setFont('times', 'normal');
       doc.setTextColor(0, 0, 0);
       doc.text('Gross Earnings:', rightColX, rightColY);
-      doc.text(formatCurrency(data.earnings.gross), pageWidth - margin - 10, rightColY, { align: 'right' });
+      doc.text(formatCurrencyPdf(data.earnings.gross), pageWidth - margin - 10, rightColY, { align: 'right' });
 
       doc.text('- Total Deductions:', rightColX, rightColY + 7);
-      doc.text(formatCurrency(data.deductions.total), pageWidth - margin - 10, rightColY + 7, { align: 'right' });
+      doc.text(formatCurrencyPdf(data.deductions.total), pageWidth - margin - 10, rightColY + 7, { align: 'right' });
 
       doc.setDrawColor(100, 200, 100);
       doc.line(rightColX, rightColY + 10, pageWidth - margin - 10, rightColY + 10);
@@ -600,7 +637,7 @@ const SalarySlip = () => {
       doc.setFont('times', 'bold');
       doc.text('= Total Net Payable:', rightColX, rightColY + 16);
       doc.setTextColor(46, 125, 50);
-      doc.text(formatCurrency(data.netPayable), pageWidth - margin - 10, rightColY + 16, { align: 'right' });
+      doc.text(formatCurrencyPdf(data.netPayable), pageWidth - margin - 10, rightColY + 16, { align: 'right' });
 
       doc.setTextColor(0, 0, 0);
       yPos = netPayableBoxY + netPayableBoxHeight + 3;
@@ -628,13 +665,14 @@ const SalarySlip = () => {
     if (confirm('Are you sure you want to clear all fields?')) {
       setFormData({
         company: { name: '', address: '', email: '', phone: '', logoImage: null },
-        employee: { name: '', id: '', designation: '', dateOfJoining: '', pan: '', uan: '', bankName: '', accountNumber: '', ifscCode: '' },
+        employee: { name: '', id: '', email: '', designation: '', dateOfJoining: '', pan: '', uan: '', bankName: '', accountNumber: '', ifscCode: '' },
         period: { payMonth: 'January', payYear: new Date().getFullYear(), payDate: new Date().toISOString().split('T')[0], paidDays: 31, lopDays: 0 },
         earnings: { basic: 0, hra: 0, otherAllowance: 0, specialAllowance: 0, gross: 0 },
         deductions: { pf: 0, pfEmployerShare: 0, total: 0 },
         netPayable: 0
       });
       setPreviewVisible(false);
+      setEmailTo('');
     }
   };
 
@@ -776,6 +814,16 @@ const SalarySlip = () => {
                     value={formData.employee.id}
                     onChange={(e) => handleInputChange('employee', 'id', e.target.value)}
                     placeholder="e.g., ANG/EMP/026"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Employee Email (for sending slip):</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={formData.employee.email}
+                    onChange={(e) => handleInputChange('employee', 'email', e.target.value)}
+                    placeholder="employee@example.com"
                   />
                 </div>
                 <div>
@@ -985,7 +1033,7 @@ const SalarySlip = () => {
                 />
               </div>
               <div className="text-sm italic text-green-800 font-semibold">
-                Rupees {numberToWords(formData.netPayable)}
+                Rupees {numberToWords(Math.round(Number(formData.netPayable) || 0))}
               </div>
             </div>
           </div>
@@ -1010,6 +1058,26 @@ const SalarySlip = () => {
                 className="preview-content bg-white p-6 rounded-lg border-2 border-gray-200 max-h-[calc(100vh-200px)] overflow-y-auto"
                 dangerouslySetInnerHTML={{ __html: previewContent }}
               />
+              <div className="border-t border-gray-200 pt-4 mt-4 space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Email salary slip to employee</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    className="form-input flex-1"
+                    placeholder="employee@example.com"
+                    value={emailTo || formData.employee.email || ''}
+                    onChange={(e) => setEmailTo(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary whitespace-nowrap px-6 disabled:opacity-50"
+                    onClick={handleSendSalarySlip}
+                    disabled={sendingEmail}
+                  >
+                    {sendingEmail ? 'Sending…' : 'Send to email'}
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
                 <button type="button" className="btn-primary flex-1" onClick={downloadPDF}>
                   Download PDF

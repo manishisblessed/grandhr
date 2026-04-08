@@ -22,7 +22,11 @@ const Leaves = () => {
   
   const { showSuccess, showError, showWarning } = useToast();
   const hrUser = JSON.parse(localStorage.getItem('hr_user') || 'null');
-  const isHR = hrUser?.role === 'ADMIN' || hrUser?.role === 'HR' || hrUser?.role === 'MANAGER';
+  const isHR =
+    hrUser?.role === 'ADMIN' ||
+    hrUser?.role === 'HR' ||
+    hrUser?.role === 'MANAGER' ||
+    hrUser?.role === 'COMPANY_ADMIN';
 
   useEffect(() => {
     fetchLeaves();
@@ -238,30 +242,32 @@ const Leaves = () => {
             ))}
           </div>
 
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="btn-primary flex items-center gap-2"
-          >
-            {showForm ? (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Cancel
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Apply Leave
-              </>
-            )}
-          </button>
+          {!isHR && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn-primary flex items-center gap-2"
+            >
+              {showForm ? (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Apply Leave
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Apply Leave Form */}
-        {showForm && (
+        {/* Apply Leave Form (employees only — HR/Admin approves via list below) */}
+        {!isHR && showForm && (
           <div className="card p-6 border-2 border-accent-200 bg-accent-50/30">
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <span className="text-2xl">📝</span>

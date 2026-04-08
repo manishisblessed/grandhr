@@ -163,6 +163,15 @@ export const sendDocumentEmail = async (
   pdfBase64?: string,
   attachmentFilename: string = 'document.pdf'
 ) => {
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD;
+  if (!smtpUser?.trim() || !smtpPass?.trim()) {
+    return {
+      success: false,
+      error:
+        'Email service is not configured on the server. Set SMTP_USER and SMTP_PASS (or EMAIL_USER and EMAIL_PASSWORD) in the backend environment. The error "Missing credentials for PLAIN" means these variables are empty.',
+    };
+  }
   try {
     const transporter = createTransporter();
     const attachments: nodemailer.SendMailOptions['attachments'] = [];

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
-import { formatDate, formatCurrency } from '../utils/pdfUtils';
+import { formatDate, formatCurrency, formatCurrencyPdf, addCompanyLetterheadPdf } from '../utils/pdfUtils';
+import { companyLetterheadHtml } from '../utils/letterheadHtml';
 import { jsPDF } from 'jspdf';
 import { saveDocument, pdfBlobToBase64 } from '../utils/documentSaver';
 import api from '../utils/api';
@@ -25,7 +26,8 @@ const OfferLetter = () => {
       phone: '',
       website: '',
       signatory: '',
-      designation: ''
+      designation: '',
+      logoImage: null
     },
     candidate: {
       name: '',
@@ -82,11 +84,30 @@ const OfferLetter = () => {
     }));
   };
 
+  const handleCompanyLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      handleInputChange('company', 'logoImage', null);
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size should be less than 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => handleInputChange('company', 'logoImage', ev.target?.result || null);
+    reader.readAsDataURL(file);
+  };
+
   const handleCompanySelect = (value) => {
     if (value === 'new') {
       setShowCompanyForm(true);
       setCurrentCompany(null);
-      setFormData(prev => ({ ...prev, company: { name: '', address: '', email: '', phone: '', website: '', signatory: '', designation: '' } }));
+      setFormData(prev => ({ ...prev, company: { name: '', address: '', email: '', phone: '', website: '', signatory: '', designation: '', logoImage: null } }));
     } else if (value !== '') {
       const company = companies[parseInt(value)];
       setCurrentCompany(company);
@@ -111,7 +132,8 @@ const OfferLetter = () => {
       phone: formData.company.phone.trim(),
       website: formData.company.website.trim(),
       signatory: formData.company.signatory.trim(),
-      designation: formData.company.designation.trim()
+      designation: formData.company.designation.trim(),
+      logoImage: formData.company.logoImage || null
     };
 
     let updatedCompanies;
@@ -160,14 +182,8 @@ const OfferLetter = () => {
 
     return `
       <div class="space-y-6 text-sm leading-relaxed">
+        ${companyLetterheadHtml(data.company)}
         <h1 class="text-2xl font-bold text-center text-primary-600 mb-6">OFFER LETTER</h1>
-        <div class="text-right space-y-1">
-          <div class="font-bold">${data.company.name || 'Company Name'}</div>
-          ${data.company.address ? `<div>${data.company.address.replace(/\n/g, '<br>')}</div>` : ''}
-          ${data.company.email ? `<div>Email: ${data.company.email}</div>` : ''}
-          ${data.company.phone ? `<div>Phone: ${data.company.phone}</div>` : ''}
-          ${data.company.website ? `<div>Website: ${data.company.website}</div>` : ''}
-        </div>
         <div><strong>Date:</strong> ${offerDate}</div>
         <div class="space-y-1">
           <strong>To,</strong><br>
@@ -280,14 +296,9 @@ const OfferLetter = () => {
       doc.setLineWidth(0.5);
       doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
 
+      yPos = addCompanyLetterheadPdf(doc, data.company, margin, pageWidth, margin);
       addText('OFFER LETTER', 18, true, 'center');
       yPos += 10;
-      addText(data.company.name || 'Company Name', 14, true, 'right');
-      if (data.company.address) addText(data.company.address, 10, false, 'right');
-      if (data.company.email) addText(`Email: ${data.company.email}`, 10, false, 'right');
-      if (data.company.phone) addText(`Phone: ${data.company.phone}`, 10, false, 'right');
-      if (data.company.website) addText(`Website: ${data.company.website}`, 10, false, 'right');
-      yPos += 5;
       addText(`Date: ${formatDate(data.terms.offerDate)}`, 12, false, 'left');
       yPos += 5;
       addText('To,', 12, true);
@@ -309,8 +320,8 @@ const OfferLetter = () => {
       addText(`   • Work Location: ${data.job.workLocation || 'As per company policy'}`, 11);
       yPos += 5;
       addText('2. Compensation Package:', 12, true);
-      addText(`   • Annual Salary: ${formatCurrency(data.compensation.annualSalary)}`, 11);
-      addText(`   • Monthly Salary: ${formatCurrency(data.compensation.monthlySalary)}`, 11);
+      addText(`   • Annual Salary: ${formatCurrencyPdf(data.compensation.annualSalary)}`, 11);
+      addText(`   • Monthly Salary: ${formatCurrencyPdf(data.compensation.monthlySalary)}`, 11);
       addText(`   • Probation Period: ${data.compensation.probationPeriod}`, 11);
       if (data.compensation.benefits) {
         addText(`   • Benefits: ${data.compensation.benefits}`, 11);
@@ -411,7 +422,7 @@ const OfferLetter = () => {
   const clearForm = () => {
     if (confirm('Are you sure you want to clear all form data?')) {
       setFormData({
-        company: { name: '', address: '', email: '', phone: '', website: '', signatory: '', designation: '' },
+        company: { name: '', address: '', email: '', phone: '', website: '', signatory: '', designation: '', logoImage: null },
         candidate: { name: '', address: '', email: '', phone: '' },
         job: { position: '', department: '', joiningDate: '', workLocation: '' },
         compensation: { annualSalary: '', monthlySalary: '', probationPeriod: '3 months', benefits: '' },
@@ -481,8 +492,21 @@ const OfferLetter = () => {
                       className="form-input" 
                       value={formData.company.address}
                       onChange={(e) => handleInputChange('company', 'address', e.target.value)}
-                      placeholder="Full company address"
+                      placeholder="Full company address (registered office / correspondence)"
                     />
+                  </div>
+                  <div>
+                    <label className="form-label">Company Logo (optional):</label>
+                    <input type="file" accept="image/*" className="form-input" onChange={handleCompanyLogoUpload} />
+                    <p className="text-xs text-gray-500 mt-1">PNG or JPG, max 2MB. Shown on preview and PDF letterhead.</p>
+                    {formData.company.logoImage && (
+                      <div className="mt-2 flex items-center gap-3">
+                        <img src={formData.company.logoImage} alt="" className="max-h-16 object-contain border rounded p-1 bg-white" />
+                        <button type="button" className="text-sm text-red-600 font-medium" onClick={() => handleInputChange('company', 'logoImage', null)}>
+                          Remove logo
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -774,7 +798,7 @@ const OfferLetter = () => {
             <button type="button" className="btn-primary flex-1 text-lg py-4" onClick={generatePreview}>
               Generate Offer Letter
             </button>
-            <button type="button" className="btn-secondary flex-1 py-4" onClick={() => setPreviewVisible(false)}>
+            <button type="button" className="btn-secondary flex-1 py-4" onClick={generatePreview}>
               Preview
             </button>
             <button type="button" className="btn-secondary flex-1 py-4" onClick={clearForm}>

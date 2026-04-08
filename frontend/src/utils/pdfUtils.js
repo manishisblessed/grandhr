@@ -32,7 +32,74 @@ export const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-export const numberToWords = (num) => {
+/** jsPDF built-in fonts do not render ₹ reliably; use this for all PDF text. */
+export const formatCurrencyPdf = (amount) => {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return 'Rs. 0';
+  const formatted =
+    n % 1 === 0
+      ? n.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+      : n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `Rs. ${formatted}`;
+};
+
+/**
+ * Adds logo + company name + address to PDF; returns Y position below the letterhead rule.
+ */
+export function addCompanyLetterheadPdf(doc, company, margin, pageWidth, yStart) {
+  const c = company || {};
+  let yPos = yStart;
+  const contentW = pageWidth - margin * 2;
+  let logoBottom = yPos;
+  if (c.logoImage && typeof c.logoImage === 'string') {
+    try {
+      let fmt = 'PNG';
+      if (c.logoImage.includes('data:image/jpeg') || c.logoImage.includes('data:image/jpg')) {
+        fmt = 'JPEG';
+      }
+      doc.addImage(c.logoImage, fmt, margin, yPos, 30, 15);
+      logoBottom = yPos + 16;
+    } catch {
+      // ignore bad image data
+    }
+  }
+  const textX = c.logoImage ? margin + 34 : margin;
+  const textMaxW = contentW - (c.logoImage ? 34 : 0);
+  doc.setFont('times', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text(String(c.name || 'Company Name'), textX, yPos + 5);
+  doc.setFont('times', 'normal');
+  doc.setFontSize(9);
+  let lineY = yPos + 10;
+  if (c.address) {
+    const addrLines = doc.splitTextToSize(String(c.address), textMaxW);
+    addrLines.forEach((ln) => {
+      doc.text(ln, textX, lineY);
+      lineY += 4.5;
+    });
+  }
+  if (c.email) {
+    doc.text(`Email: ${String(c.email)}`, textX, lineY);
+    lineY += 4.5;
+  }
+  if (c.phone) {
+    doc.text(`Phone: ${String(c.phone)}`, textX, lineY);
+    lineY += 4.5;
+  }
+  if (c.website) {
+    doc.text(`Website: ${String(c.website)}`, textX, lineY);
+    lineY += 4.5;
+  }
+  const blockBottom = Math.max(logoBottom, lineY) + 2;
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, blockBottom, pageWidth - margin, blockBottom);
+  return blockBottom + 5;
+}
+
+export const numberToWords = (input) => {
+  let num = Math.floor(Math.abs(Number(input) || 0));
+  if (num === 0) return 'Zero';
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
   const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
   const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];

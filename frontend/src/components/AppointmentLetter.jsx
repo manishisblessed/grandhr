@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
-import { formatDate, formatCurrency } from '../utils/pdfUtils';
+import { formatDate, formatCurrency, formatCurrencyPdf, addCompanyLetterheadPdf } from '../utils/pdfUtils';
+import { companyLetterheadHtml } from '../utils/letterheadHtml';
 import { jsPDF } from 'jspdf';
+import api from '../utils/api';
+import { useToast } from '../contexts/ToastContext';
 
 const AppointmentLetter = () => {
   const [companies, setCompanies] = useState([]);
@@ -10,9 +13,12 @@ const AppointmentLetter = () => {
   const [showCompanyManager, setShowCompanyManager] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
+  const [emailTo, setEmailTo] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState({
-    company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '' },
+    company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '', logoImage: null },
     employee: { name: '', address: '', email: '', phone: '' },
     appointment: { position: '', department: '', appointmentDate: '', joiningDate: '', workLocation: '' },
     compensation: { monthlySalary: '', annualSalary: '', probationPeriod: '3 months' }
@@ -42,11 +48,58 @@ const AppointmentLetter = () => {
     }));
   };
 
+  const handleCompanyLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      handleInputChange('company', 'logoImage', null);
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size should be less than 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => handleInputChange('company', 'logoImage', ev.target?.result || null);
+    reader.readAsDataURL(file);
+  };
+
+  const handleEmailLetter = async () => {
+    const recipientEmail = emailTo.trim() || formData.employee.email?.trim();
+    if (!recipientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      showError('Please enter a valid employee email address');
+      return;
+    }
+    const data = { ...formData, company: currentCompany || formData.company };
+    if (!data.employee.name || !data.appointment.position) {
+      showError('Please fill employee name and position before sending');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const htmlContent = generateAppointmentLetterHTML(data);
+      const subject = `Appointment Letter - ${data.appointment.position} - ${data.company.name || 'Company'}`;
+      await api.post('/generated-documents/send-email', {
+        toEmail: recipientEmail,
+        subject,
+        htmlContent,
+      });
+      showSuccess(`Appointment letter sent to ${recipientEmail}`);
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const handleCompanySelect = (value) => {
     if (value === 'new') {
       setShowCompanyForm(true);
       setCurrentCompany(null);
-      setFormData(prev => ({ ...prev, company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '' } }));
+      setFormData(prev => ({ ...prev, company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '', logoImage: null } }));
     } else if (value !== '') {
       const company = companies[parseInt(value)];
       setCurrentCompany(company);
@@ -66,7 +119,8 @@ const AppointmentLetter = () => {
     const company = {
       name, address: formData.company.address.trim(), email: formData.company.email.trim(),
       phone: formData.company.phone.trim(), signatory: formData.company.signatory.trim(),
-      designation: formData.company.designation.trim()
+      designation: formData.company.designation.trim(),
+      logoImage: formData.company.logoImage || null
     };
     let updatedCompanies;
     if (currentCompany && companies.findIndex(c => c.name === currentCompany.name) !== -1) {
@@ -107,13 +161,8 @@ const AppointmentLetter = () => {
     const annualSalary = formatCurrency(data.compensation.annualSalary);
     return `
       <div class="space-y-6 text-sm leading-relaxed">
+        ${companyLetterheadHtml(data.company)}
         <h1 class="text-2xl font-bold text-center text-primary-600 mb-6">APPOINTMENT LETTER</h1>
-        <div class="text-right space-y-1">
-          <div class="font-bold">${data.company.name || 'Company Name'}</div>
-          ${data.company.address ? `<div>${data.company.address.replace(/\n/g, '<br>')}</div>` : ''}
-          ${data.company.email ? `<div>Email: ${data.company.email}</div>` : ''}
-          ${data.company.phone ? `<div>Phone: ${data.company.phone}</div>` : ''}
-        </div>
         <div><strong>Date:</strong> ${appointmentDate}</div>
         <div class="space-y-1">
           <strong>To,</strong><br>
@@ -196,13 +245,9 @@ const AppointmentLetter = () => {
       doc.setLineWidth(0.5);
       doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
 
+      yPos = addCompanyLetterheadPdf(doc, data.company, margin, pageWidth, margin);
       addText('APPOINTMENT LETTER', 18, true, 'center');
       yPos += 10;
-      addText(data.company.name || 'Company Name', 14, true, 'right');
-      if (data.company.address) addText(data.company.address, 10, false, 'right');
-      if (data.company.email) addText(`Email: ${data.company.email}`, 10, false, 'right');
-      if (data.company.phone) addText(`Phone: ${data.company.phone}`, 10, false, 'right');
-      yPos += 5;
       addText(`Date: ${formatDate(data.appointment.appointmentDate)}`, 12, false, 'left');
       yPos += 5;
       addText('To,', 12, true);
@@ -224,9 +269,9 @@ const AppointmentLetter = () => {
       addText(`   • Work Location: ${data.appointment.workLocation || 'As per company policy'}`, 11);
       yPos += 5;
       addText('2. Compensation:', 12, true);
-      addText(`   • Monthly Salary: ${formatCurrency(data.compensation.monthlySalary)}`, 11);
+      addText(`   • Monthly Salary: ${formatCurrencyPdf(data.compensation.monthlySalary)}`, 11);
       if (data.compensation.annualSalary) {
-        addText(`   • Annual Salary: ${formatCurrency(data.compensation.annualSalary)}`, 11);
+        addText(`   • Annual Salary: ${formatCurrencyPdf(data.compensation.annualSalary)}`, 11);
       }
       addText(`   • Probation Period: ${data.compensation.probationPeriod}`, 11);
       yPos += 5;
@@ -258,7 +303,7 @@ const AppointmentLetter = () => {
   const clearForm = () => {
     if (confirm('Are you sure you want to clear all fields?')) {
       setFormData({
-        company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '' },
+        company: { name: '', address: '', email: '', phone: '', signatory: '', designation: '', logoImage: null },
         employee: { name: '', address: '', email: '', phone: '' },
         appointment: { position: '', department: '', appointmentDate: '', joiningDate: '', workLocation: '' },
         compensation: { monthlySalary: '', annualSalary: '', probationPeriod: '3 months' }
@@ -271,6 +316,7 @@ const AppointmentLetter = () => {
         appointment: { ...prev.appointment, appointmentDate: today.toISOString().split('T')[0], joiningDate: futureDate.toISOString().split('T')[0] }
       }));
       setPreviewVisible(false);
+      setEmailTo('');
     }
   };
 
@@ -309,6 +355,16 @@ const AppointmentLetter = () => {
                     <input type="text" className="form-input" value={formData.company.name} onChange={(e) => handleInputChange('company', 'name', e.target.value)} placeholder="Company Name" /></div>
                   <div><label className="form-label">Address:</label>
                     <textarea rows="3" className="form-input" value={formData.company.address} onChange={(e) => handleInputChange('company', 'address', e.target.value)} placeholder="Full address" /></div>
+                  <div>
+                    <label className="form-label">Company Logo (optional):</label>
+                    <input type="file" accept="image/*" className="form-input" onChange={handleCompanyLogoUpload} />
+                    {formData.company.logoImage && (
+                      <div className="mt-2 flex items-center gap-3">
+                        <img src={formData.company.logoImage} alt="" className="max-h-16 object-contain border rounded p-1 bg-white" />
+                        <button type="button" className="text-sm text-red-600 font-medium" onClick={() => handleInputChange('company', 'logoImage', null)}>Remove logo</button>
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className="form-label">Email:</label>
                       <input type="email" className="form-input" value={formData.company.email} onChange={(e) => handleInputChange('company', 'email', e.target.value)} placeholder="hr@company.com" /></div>
@@ -393,7 +449,7 @@ const AppointmentLetter = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button type="button" className="btn-primary flex-1 text-lg py-4" onClick={generatePreview}>Generate Letter</button>
-            <button type="button" className="btn-secondary flex-1 py-4" onClick={() => setPreviewVisible(false)}>Preview</button>
+            <button type="button" className="btn-secondary flex-1 py-4" onClick={generatePreview}>Preview</button>
             <button type="button" className="btn-secondary flex-1 py-4" onClick={clearForm}>Clear</button>
           </div>
         </div>
@@ -404,6 +460,26 @@ const AppointmentLetter = () => {
             <div className="card shadow-2xl">
               <h2 className="section-title mb-4">Preview</h2>
               <div className="preview-content bg-white p-6 rounded-lg border-2 border-gray-200 max-h-[calc(100vh-200px)] overflow-y-auto" dangerouslySetInnerHTML={{ __html: previewContent }} />
+              <div className="border-t border-gray-200 pt-4 mt-4 space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Email to employee</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    className="form-input flex-1"
+                    placeholder="employee@example.com"
+                    value={emailTo || formData.employee.email || ''}
+                    onChange={(e) => setEmailTo(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary whitespace-nowrap px-6 disabled:opacity-50"
+                    onClick={handleEmailLetter}
+                    disabled={sendingEmail}
+                  >
+                    {sendingEmail ? 'Sending…' : 'Send to email'}
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
                 <button type="button" className="btn-primary flex-1" onClick={downloadPDF}>Download PDF</button>
                 <button type="button" className="btn-secondary flex-1" onClick={() => setPreviewVisible(false)}>Close</button>

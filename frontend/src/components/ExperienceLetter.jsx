@@ -536,7 +536,7 @@ const ExperienceLetter = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button type="button" className="btn-primary flex-1 text-lg py-4" onClick={generatePreview}>Generate Letter</button>
-            <button type="button" className="btn-secondary flex-1 py-4" onClick={() => setPreviewVisible(false)}>Preview</button>
+            <button type="button" className="btn-secondary flex-1 py-4" onClick={generatePreview}>Preview</button>
             <button type="button" className="btn-secondary flex-1 py-4" onClick={clearForm}>Clear</button>
           </div>
         </div>
