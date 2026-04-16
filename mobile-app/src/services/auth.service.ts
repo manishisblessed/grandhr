@@ -31,4 +31,14 @@ export const AuthService = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put('/auth/change-password', { currentPassword, newPassword }),
+
+  /**
+   * Initiates account deletion. Requires password re-authentication to
+   * guard against lost-device / session-hijack deletions.
+   *
+   * Google Play Developer Policy (Dec 2023): apps with user accounts must
+   * offer an in-app way to request account + data deletion.
+   */
+  deleteAccount: (currentPassword: string) =>
+    api.post('/auth/delete-account', { currentPassword }),
 };

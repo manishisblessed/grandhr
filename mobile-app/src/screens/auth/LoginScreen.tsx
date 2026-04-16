@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { useAuthStore } from '../../store/useAuthStore';
+import { Flags } from '../../constants/flags';
 import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
 
 type Props = NativeStackScreenProps<any, 'Login'>;
@@ -96,21 +97,30 @@ export default function LoginScreen({ navigation }: Props) {
             style={styles.loginBtn}
           />
 
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Register')}
-            style={styles.registerBtn}
-          >
-            <Text style={styles.registerText}>
-              Don't have an account? <Text style={styles.registerBold}>Register</Text>
-            </Text>
-          </TouchableOpacity>
+          {Flags.allowCompanySignup ? (
+            <>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Register')}
+                style={styles.registerBtn}
+              >
+                <Text style={styles.registerText}>
+                  Don't have an account? <Text style={styles.registerBold}>Register</Text>
+                </Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CompanyOnboarding')}
-            style={styles.companyBtn}
-          >
-            <Text style={styles.companyText}>Register your company</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CompanyOnboarding')}
+                style={styles.companyBtn}
+              >
+                <Text style={styles.companyText}>Register your company</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text style={styles.providedByText}>
+              Your login is provisioned by your HR administrator. Contact them if
+              you need access.
+            </Text>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -169,4 +179,11 @@ const styles = StyleSheet.create({
   registerBold: { color: Colors.primary, fontWeight: '600' },
   companyBtn: { marginTop: Spacing.md, alignItems: 'center' },
   companyText: { fontSize: FontSize.sm, color: Colors.secondary, fontWeight: '500' },
+  providedByText: {
+    marginTop: Spacing.xl,
+    fontSize: FontSize.xs,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });

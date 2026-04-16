@@ -13,6 +13,11 @@ import NotificationsScreen from '../screens/common/NotificationsScreen';
 import SupportScreen from '../screens/common/SupportScreen';
 import ChatbotScreen from '../screens/common/ChatbotScreen';
 import SettingsScreen from '../screens/common/SettingsScreen';
+import PrivacyPolicyScreen from '../screens/common/PrivacyPolicyScreen';
+import TermsScreen from '../screens/common/TermsScreen';
+import OpenSourceLicensesScreen from '../screens/common/OpenSourceLicensesScreen';
+import AboutScreen from '../screens/common/AboutScreen';
+import DeleteAccountScreen from '../screens/common/DeleteAccountScreen';
 import { Colors, FontSize } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
@@ -59,6 +64,11 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="Support" component={SupportScreen} options={{ title: 'Support' }} />
       <MoreStack.Screen name="Documents" component={DocumentsScreen} options={{ title: 'My Documents' }} />
       <MoreStack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'HR Assistant' }} />
+      <MoreStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
+      <MoreStack.Screen name="Terms" component={TermsScreen} options={{ title: 'Terms of Service' }} />
+      <MoreStack.Screen name="OpenSourceLicenses" component={OpenSourceLicensesScreen} options={{ title: 'Open-source Licenses' }} />
+      <MoreStack.Screen name="About" component={AboutScreen} options={{ title: 'About' }} />
+      <MoreStack.Screen name="DeleteAccount" component={DeleteAccountScreen} options={{ title: 'Delete Account' }} />
     </MoreStack.Navigator>
   );
 }

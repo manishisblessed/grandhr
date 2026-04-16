@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  Alert,
 } from 'react-native';
+import { useToast } from '../../components/common/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import StatCard from '../../components/dashboard/StatCard';
@@ -24,6 +24,7 @@ import { DashboardStats, Attendance } from '../../types';
 
 export default function EmployeeDashboardScreen() {
   const navigation = useNavigation<any>();
+  const toast = useToast();
   const { user } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
@@ -63,14 +64,14 @@ export default function EmployeeDashboardScreen() {
       if (!todayAttendance?.clockIn) {
         const res = await AttendanceService.clockIn();
         setTodayAttendance(res.data);
-        Alert.alert('Success', 'Clocked in successfully!');
+        toast.success('Clocked in');
       } else if (!todayAttendance?.clockOut) {
         const res = await AttendanceService.clockOut();
         setTodayAttendance(res.data);
-        Alert.alert('Success', 'Clocked out successfully!');
+        toast.success('Clocked out');
       }
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed');
+      toast.error(error?.response?.data?.message || 'Could not update attendance');
     } finally {
       setClockingIn(false);
     }

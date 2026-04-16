@@ -8,20 +8,23 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import PasswordStrengthMeter from '../../components/common/PasswordStrengthMeter';
 import { AuthService } from '../../services/auth.service';
 import { useAuthStore } from '../../store/useAuthStore';
-import * as SecureStore from 'expo-secure-store';
-import { TOKEN_KEY, USER_KEY } from '../../constants/config';
 import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { firstPasswordError, isPasswordStrong, PASSWORD_MIN_LENGTH } from '../../utils/password';
+import { Flags } from '../../constants/flags';
 
 type Props = NativeStackScreenProps<any, 'Register'>;
 
 export default function RegisterScreen({ navigation }: Props) {
-  const { setUser } = useAuthStore();
+  const signInWithSession = useAuthStore((s) => s.signInWithSession);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -32,6 +35,7 @@ export default function RegisterScreen({ navigation }: Props) {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const update = (key: string, val: string) =>
     setForm((p) => ({ ...p, [key]: val }));
@@ -42,10 +46,15 @@ export default function RegisterScreen({ navigation }: Props) {
     if (!form.lastName.trim()) e.lastName = 'Required';
     if (!form.email.trim()) e.email = 'Required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email';
+
     if (!form.password) e.password = 'Required';
-    else if (form.password.length < 6) e.password = 'Min 6 characters';
+    else {
+      const pwErr = firstPasswordError(form.password);
+      if (pwErr) e.password = pwErr;
+    }
     if (form.password !== form.confirmPassword)
       e.confirmPassword = 'Passwords do not match';
+    if (!acceptedTerms) e.terms = 'Please accept the Terms and Privacy Policy';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -63,19 +72,18 @@ export default function RegisterScreen({ navigation }: Props) {
         role: 'EMPLOYEE',
       });
       const { user, token } = res.data;
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
-      setUser(user);
-      useAuthStore.setState({ isAuthenticated: true });
+      await signInWithSession(user, token);
     } catch (error: any) {
       Alert.alert(
         'Registration Failed',
-        error.response?.data?.message || 'Something went wrong',
+        error?.response?.data?.message || 'Something went wrong',
       );
     } finally {
       setLoading(false);
     }
   };
+
+  const canSubmit = acceptedTerms && isPasswordStrong(form.password);
 
   return (
     <KeyboardAvoidingView
@@ -130,13 +138,14 @@ export default function RegisterScreen({ navigation }: Props) {
 
           <Input
             label="Password"
-            placeholder="Min 6 characters"
+            placeholder={`Min ${PASSWORD_MIN_LENGTH} chars, with upper, lower, digit & symbol`}
             leftIcon="lock-closed-outline"
             isPassword
             value={form.password}
             onChangeText={(v) => update('password', v)}
             error={errors.password}
           />
+          <PasswordStrengthMeter value={form.password} />
 
           <Input
             label="Confirm Password"
@@ -148,10 +157,36 @@ export default function RegisterScreen({ navigation }: Props) {
             error={errors.confirmPassword}
           />
 
+          <TouchableOpacity
+            style={styles.consentRow}
+            activeOpacity={0.7}
+            onPress={() => setAcceptedTerms((v) => !v)}
+          >
+            <Ionicons
+              name={acceptedTerms ? 'checkbox' : 'square-outline'}
+              size={22}
+              color={acceptedTerms ? Colors.primary : Colors.textTertiary}
+            />
+            <Text style={styles.consentText}>
+              I agree to the{' '}
+              <Text style={styles.link} onPress={() => Linking.openURL(Flags.termsUrl)}>
+                Terms of Service
+              </Text>{' '}
+              and{' '}
+              <Text style={styles.link} onPress={() => Linking.openURL(Flags.privacyUrl)}>
+                Privacy Policy
+              </Text>
+              , and consent to processing of my personal data for HR
+              administration by my employer.
+            </Text>
+          </TouchableOpacity>
+          {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
+
           <Button
             title="Register"
             onPress={handleRegister}
             loading={loading}
+            disabled={!canSubmit}
             size="lg"
           />
 
@@ -195,4 +230,24 @@ const styles = StyleSheet.create({
   linkBtn: { marginTop: Spacing.lg, alignItems: 'center' },
   linkText: { fontSize: FontSize.sm, color: Colors.textSecondary },
   linkBold: { color: Colors.primary, fontWeight: '600' },
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  consentText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  link: { color: Colors.primary, fontWeight: '600' },
+  errorText: {
+    fontSize: FontSize.xs,
+    color: Colors.error,
+    marginBottom: Spacing.sm,
+    marginTop: -Spacing.sm,
+  },
 });

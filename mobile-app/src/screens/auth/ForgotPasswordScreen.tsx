@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,24 +16,36 @@ import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
 
 type Props = NativeStackScreenProps<any, 'ForgotPassword'>;
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function ForgotPasswordScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const handleSubmit = async () => {
-    if (!email.trim()) return;
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError('Enter your email address');
+      return;
+    }
+    if (!EMAIL_REGEX.test(trimmed)) {
+      setError('Enter a valid email address');
+      return;
+    }
+    setError(undefined);
     setLoading(true);
     try {
-      await AuthService.forgotPassword(email.trim());
-      setSent(true);
-    } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Something went wrong',
-      );
+      // We intentionally do not differentiate between "user found" and
+      // "user not found" responses — showing the same confirmation either
+      // way avoids leaking which emails have accounts.
+      await AuthService.forgotPassword(trimmed);
+    } catch {
+      // swallow: still show the generic confirmation screen.
     } finally {
       setLoading(false);
+      setSent(true);
     }
   };
 
@@ -44,7 +55,8 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
         <Ionicons name="mail-open-outline" size={64} color={Colors.primary} />
         <Text style={styles.sentTitle}>Check your email</Text>
         <Text style={styles.sentMessage}>
-          We sent a password reset link to {email}
+          If an account exists for that email, we've sent a password reset
+          link. Please also check your spam folder.
         </Text>
         <Button
           title="Back to Login"
@@ -81,7 +93,11 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(v) => {
+              setEmail(v);
+              if (error) setError(undefined);
+            }}
+            error={error}
           />
           <Button
             title="Send Reset Link"

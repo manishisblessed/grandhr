@@ -1,15 +1,25 @@
 import Constants from 'expo-constants';
+import { Flags } from './flags';
 
 const extra = Constants.expoConfig?.extra as { apiUrl?: string } | undefined;
 const raw = extra?.apiUrl ?? 'https://api.grandhr.in/api';
 export const API_BASE_URL = String(raw).replace(/\/+$/, '');
 
-export const WHATSAPP_NUMBER = '919090702705';
-export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
-export const WHATSAPP_MESSAGE = 'Hi GrandHR! I need help with HR management.';
+/**
+ * Customer-support channels. The WhatsApp number comes from the
+ * EXPO_PUBLIC_SUPPORT_WHATSAPP build flag; when empty the WhatsApp
+ * option is hidden everywhere in the UI.
+ */
+export const SUPPORT_WHATSAPP = Flags.supportWhatsapp;
+export const SUPPORT_EMAIL = Flags.supportEmail;
+export const WHATSAPP_URL = SUPPORT_WHATSAPP ? `https://wa.me/${SUPPORT_WHATSAPP}` : '';
+export const WHATSAPP_MESSAGE = 'Hi GrandHR Support! I need help with my account.';
 
 export const TOKEN_KEY = 'grandhr_token';
 export const USER_KEY = 'grandhr_user';
+export const CONSENT_KEY = 'grandhr_consent_v1';
+export const APP_LOCK_KEY = 'grandhr_app_lock_enabled';
+export const LAST_ACTIVE_KEY = 'grandhr_last_active_ms';
 
 export const LEAVE_TYPES = [
   { label: 'Casual Leave', value: 'CASUAL_LEAVE' },

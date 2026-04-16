@@ -7,19 +7,25 @@ import {
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
+  Linking,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PasswordStrengthMeter from '../../components/common/PasswordStrengthMeter';
 import { CompanyService } from '../../services/company.service';
 import { useAuthStore } from '../../store/useAuthStore';
-import * as SecureStore from 'expo-secure-store';
-import { TOKEN_KEY, USER_KEY } from '../../constants/config';
 import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { firstPasswordError, isPasswordStrong, PASSWORD_MIN_LENGTH } from '../../utils/password';
+import { Flags } from '../../constants/flags';
 
 export default function CompanyOnboardingScreen({ navigation }: any) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showIndiaTax, setShowIndiaTax] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [company, setCompany] = useState({
     name: '',
     legalName: '',
@@ -68,9 +74,13 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
     else if (!/\S+@\S+\.\S+/.test(admin.email))
       e.adminEmail = 'Invalid email';
     if (!admin.password) e.adminPassword = 'Required';
-    else if (admin.password.length < 8) e.adminPassword = 'Min 8 characters';
+    else {
+      const pwErr = firstPasswordError(admin.password);
+      if (pwErr) e.adminPassword = pwErr;
+    }
     if (admin.password !== admin.confirmPassword)
       e.confirmPassword = 'Passwords do not match';
+    if (!acceptedTerms) e.terms = 'Please accept the Terms and Privacy Policy';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -105,19 +115,18 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
         },
       });
       const { user, token } = res.data;
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
-      useAuthStore.getState().setUser(user);
-      useAuthStore.setState({ isAuthenticated: true });
+      await useAuthStore.getState().signInWithSession(user, token);
     } catch (error: any) {
       Alert.alert(
         'Error',
-        error.response?.data?.message || 'Registration failed',
+        error?.response?.data?.message || 'Registration failed',
       );
     } finally {
       setLoading(false);
     }
   };
+
+  const canSubmit = acceptedTerms && isPasswordStrong(admin.password);
 
   return (
     <KeyboardAvoidingView
@@ -164,7 +173,7 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
             />
             <Input
               label="Phone"
-              placeholder="+91 9876543210"
+              placeholder="Include country code"
               keyboardType="phone-pad"
               value={company.phone}
               onChangeText={(v) => updateCompany('phone', v)}
@@ -178,21 +187,19 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
             />
             <Input
               label="Address"
-              placeholder="123 Business Park"
+              placeholder="Street, building, suite"
               value={company.address}
               onChangeText={(v) => updateCompany('address', v)}
             />
             <View style={styles.row}>
               <Input
                 label="City"
-                placeholder="Mumbai"
                 value={company.city}
                 onChangeText={(v) => updateCompany('city', v)}
                 containerStyle={styles.half}
               />
               <Input
-                label="State"
-                placeholder="Maharashtra"
+                label="State / Region"
                 value={company.state}
                 onChangeText={(v) => updateCompany('state', v)}
                 containerStyle={styles.half}
@@ -201,33 +208,64 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
             <View style={styles.row}>
               <Input
                 label="Country"
-                placeholder="India"
                 value={company.country}
                 onChangeText={(v) => updateCompany('country', v)}
                 containerStyle={styles.half}
               />
               <Input
-                label="ZIP Code"
-                placeholder="400001"
+                label="Postal Code"
                 value={company.zipCode}
                 onChangeText={(v) => updateCompany('zipCode', v)}
                 containerStyle={styles.half}
               />
             </View>
             <Input
-              label="PAN Number"
-              placeholder="ABCDE1234F"
+              label="Tax ID / VAT / EIN"
+              placeholder="Your local tax identifier"
               autoCapitalize="characters"
-              value={company.panNumber}
-              onChangeText={(v) => updateCompany('panNumber', v)}
+              value={company.taxId}
+              onChangeText={(v) => updateCompany('taxId', v)}
             />
             <Input
-              label="GST Number"
-              placeholder="22ABCDE1234F1Z5"
+              label="Company Registration Number"
+              placeholder="Optional"
               autoCapitalize="characters"
-              value={company.gstNumber}
-              onChangeText={(v) => updateCompany('gstNumber', v)}
+              value={company.registrationNumber}
+              onChangeText={(v) => updateCompany('registrationNumber', v)}
             />
+
+            <TouchableOpacity
+              style={styles.disclosureRow}
+              onPress={() => setShowIndiaTax((v) => !v)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={showIndiaTax ? 'chevron-down' : 'chevron-forward'}
+                size={16}
+                color={Colors.textSecondary}
+              />
+              <Text style={styles.disclosureText}>
+                India-specific tax details (optional)
+              </Text>
+            </TouchableOpacity>
+            {showIndiaTax && (
+              <>
+                <Input
+                  label="PAN Number"
+                  placeholder="ABCDE1234F"
+                  autoCapitalize="characters"
+                  value={company.panNumber}
+                  onChangeText={(v) => updateCompany('panNumber', v)}
+                />
+                <Input
+                  label="GST Number"
+                  placeholder="22ABCDE1234F1Z5"
+                  autoCapitalize="characters"
+                  value={company.gstNumber}
+                  onChangeText={(v) => updateCompany('gstNumber', v)}
+                />
+              </>
+            )}
             <Button
               title="Next: Admin Account"
               onPress={() => {
@@ -267,12 +305,13 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
             />
             <Input
               label="Password *"
-              placeholder="Min 8 characters"
+              placeholder={`Min ${PASSWORD_MIN_LENGTH} chars, with upper, lower, digit & symbol`}
               isPassword
               value={admin.password}
               onChangeText={(v) => updateAdmin('password', v)}
               error={errors.adminPassword}
             />
+            <PasswordStrengthMeter value={admin.password} />
             <Input
               label="Confirm Password *"
               placeholder="Re-enter password"
@@ -281,10 +320,37 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
               onChangeText={(v) => updateAdmin('confirmPassword', v)}
               error={errors.confirmPassword}
             />
+
+            <TouchableOpacity
+              style={styles.consentRow}
+              activeOpacity={0.7}
+              onPress={() => setAcceptedTerms((v) => !v)}
+            >
+              <Ionicons
+                name={acceptedTerms ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={acceptedTerms ? Colors.primary : Colors.textTertiary}
+              />
+              <Text style={styles.consentText}>
+                I am authorized to register this company and I agree to the{' '}
+                <Text style={styles.link} onPress={() => Linking.openURL(Flags.termsUrl)}>
+                  Terms of Service
+                </Text>{' '}
+                and{' '}
+                <Text style={styles.link} onPress={() => Linking.openURL(Flags.privacyUrl)}>
+                  Privacy Policy
+                </Text>
+                . I consent, on behalf of the company, to processing of
+                employee personal data for HR administration.
+              </Text>
+            </TouchableOpacity>
+            {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
+
             <Button
               title="Register Company"
               onPress={handleSubmit}
               loading={loading}
+              disabled={!canSubmit}
               size="lg"
             />
             <Button
@@ -345,4 +411,31 @@ const styles = StyleSheet.create({
   formCard: { marginBottom: Spacing.lg },
   row: { flexDirection: 'row', gap: Spacing.md },
   half: { flex: 1 },
+  disclosureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  disclosureText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '500' },
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  consentText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  link: { color: Colors.primary, fontWeight: '600' },
+  errorText: {
+    fontSize: FontSize.xs,
+    color: Colors.error,
+    marginBottom: Spacing.sm,
+    marginTop: -Spacing.sm,
+  },
 });
