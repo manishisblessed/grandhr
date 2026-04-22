@@ -12,12 +12,11 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#4F46E5"
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
-    "privacy": "https://grandhr.in/privacy-policy",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.grandhr.mobile",
@@ -99,7 +98,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#4F46E5"
+        "backgroundColor": "#FFFFFF"
       },
       "package": "com.grandhr.mobile",
       "versionCode": 1,

@@ -1,17 +1,19 @@
 /**
- * Regenerate app store assets from a single source image.
+ * Regenerate app store assets from source images.
  *
- * Produces:
- *   - assets/icon.png           1024x1024 opaque iOS/store icon
- *   - assets/adaptive-icon.png  1024x1024 foreground with ~66% safe zone, transparent bg
- *   - assets/splash.png         1242x2436 centered logo on the app's primary color
- *   - assets/favicon.png        48x48 web favicon
+ * Sources (drop them in assets/ and re-run):
+ *   - assets/logomark.{png,jpg,jpeg}  (preferred) — square mark only,
+ *                                      used for icon/adaptive-icon/favicon.
+ *   - assets/source.{png,jpg,jpeg}    (preferred) — full logo (mark + wordmark),
+ *                                      used for splash. Falls back to icon
+ *                                      sources if no logomark is provided.
  *
- * The background color for splash & icon matches app.json's primaryColor.
- * Source priority:
- *   1. assets/source.png / source.jpg (preferred, commit a clean logo here)
- *   2. ../frontend/public/logo-icon.jpeg
- *   3. minimal transparent placeholder (so builds don't break in CI)
+ * Outputs:
+ *   assets/icon.png           1024×1024 opaque, brand bg, logomark filling ~80%.
+ *   assets/adaptive-icon.png  1024×1024 transparent bg, logomark in 66% safe zone
+ *                             (Android Material guidance).
+ *   assets/splash.png         1242×2436 full logo on brand bg.
+ *   assets/favicon.png        48×48 brand bg with logomark.
  */
 const sharp = require('sharp');
 const path = require('path');
@@ -19,16 +21,22 @@ const fs = require('fs');
 
 const projectRoot = path.join(__dirname, '..');
 const outDir = path.join(projectRoot, 'assets');
-const BG = '#4F46E5';
+// Splash + Android adaptive-icon background use the brand color.
+// Store / iOS icon uses a white tile so the multicolor mark stays legible
+// at small sizes (matches the "colored-logo-on-white-tile" pattern used by
+// most Google and Apple-style apps).
+const BRAND_BG = '#4F46E5';
+const ICON_BG = '#FFFFFF';
 
-function pickSource() {
-  const candidates = [
-    path.join(outDir, 'source.png'),
-    path.join(outDir, 'source.jpg'),
-    path.join(outDir, 'source.jpeg'),
-    path.join(projectRoot, '..', 'frontend', 'public', 'logo-icon.jpeg'),
-  ];
-  return candidates.find((p) => fs.existsSync(p));
+const ICON_FILES = ['logomark.png', 'logomark.jpg', 'logomark.jpeg'];
+const SOURCE_FILES = ['source.png', 'source.jpg', 'source.jpeg'];
+
+function pick(names) {
+  for (const n of names) {
+    const p = path.join(outDir, n);
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
 }
 
 async function writePlaceholders() {
@@ -42,97 +50,92 @@ async function writePlaceholders() {
   console.log('Wrote minimal placeholders to assets/');
 }
 
+/**
+ * If a dedicated logomark file exists, use it as-is. Otherwise crop a
+ * top-anchored square out of `source` so we exclude any wordmark / tagline
+ * sitting below the symbol.
+ */
+async function deriveLogomarkBuffer(logomarkPath, sourcePath) {
+  if (logomarkPath) {
+    return fs.readFileSync(logomarkPath);
+  }
+  const meta = await sharp(sourcePath).metadata();
+  const w = meta.width || 1;
+  const h = meta.height || 1;
+  // Heuristic: assume the symbol occupies ~70% of the source's height,
+  // centered horizontally, anchored at the top. Adjust if needed.
+  const side = Math.min(w, Math.floor(h * 0.7));
+  return sharp(sourcePath)
+    .extract({
+      left: Math.max(0, Math.floor((w - side) / 2)),
+      top: 0,
+      width: side,
+      height: side,
+    })
+    .png()
+    .toBuffer();
+}
+
+async function compose({ width, height, bg, inner, innerSize }) {
+  return sharp({
+    create: { width, height, channels: 4, background: bg },
+  }).composite([
+    {
+      input: await sharp(inner)
+        .resize(innerSize, innerSize, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .png()
+        .toBuffer(),
+      gravity: 'center',
+    },
+  ]);
+}
+
 async function run() {
-  const src = pickSource();
-  if (!src) {
-    console.warn('No source image found; writing placeholders.');
+  const logomark = pick(ICON_FILES);
+  const source = pick(SOURCE_FILES);
+
+  if (!logomark && !source) {
+    console.warn('No logomark.* or source.* found in assets/; writing placeholders.');
     await writePlaceholders();
     return;
   }
-  console.log(`Using source: ${path.relative(projectRoot, src)}`);
 
-  // iOS/store icon: 1024x1024 opaque, fill background with the brand color.
-  await sharp({
-    create: {
-      width: 1024,
-      height: 1024,
-      channels: 4,
-      background: BG,
-    },
-  })
-    .composite([
-      {
-        input: await sharp(src)
-          .resize(720, 720, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-          .png()
-          .toBuffer(),
-        gravity: 'center',
-      },
-    ])
+  console.log(`Logomark: ${logomark ? path.basename(logomark) : '(derived from ' + path.basename(source) + ')'}`);
+  console.log(`Splash source: ${path.basename(source || logomark)}`);
+
+  const logomarkBuf = await deriveLogomarkBuffer(logomark, source || logomark);
+  const splashSource = source || logomark;
+
+  await (
+    await compose({ width: 1024, height: 1024, bg: ICON_BG, inner: logomarkBuf, innerSize: 880 })
+  )
     .png()
     .toFile(path.join(outDir, 'icon.png'));
 
-  // Android adaptive icon foreground: 1024x1024, transparent background, logo
-  // confined to the inner ~66% safe zone (Google Play guidance).
-  await sharp({
-    create: {
+  await (
+    await compose({
       width: 1024,
       height: 1024,
-      channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    },
-  })
-    .composite([
-      {
-        input: await sharp(src)
-          .resize(660, 660, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-          .png()
-          .toBuffer(),
-        gravity: 'center',
-      },
-    ])
+      bg: { r: 0, g: 0, b: 0, alpha: 0 },
+      inner: logomarkBuf,
+      innerSize: 660,
+    })
+  )
     .png()
     .toFile(path.join(outDir, 'adaptive-icon.png'));
 
-  // Splash: centered logo on solid primary color (1242x2436 covers iPhone + Android).
-  await sharp({
-    create: {
-      width: 1242,
-      height: 2436,
-      channels: 4,
-      background: BG,
-    },
-  })
-    .composite([
-      {
-        input: await sharp(src)
-          .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-          .png()
-          .toBuffer(),
-        gravity: 'center',
-      },
-    ])
+  await (
+    await compose({ width: 1242, height: 2436, bg: ICON_BG, inner: splashSource, innerSize: 820 })
+  )
     .png()
     .toFile(path.join(outDir, 'splash.png'));
 
-  // Favicon: 48x48 opaque.
-  await sharp({
-    create: {
-      width: 48,
-      height: 48,
-      channels: 4,
-      background: BG,
-    },
-  })
-    .composite([
-      {
-        input: await sharp(src)
-          .resize(34, 34, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-          .png()
-          .toBuffer(),
-        gravity: 'center',
-      },
-    ])
+  await (
+    await compose({ width: 48, height: 48, bg: ICON_BG, inner: logomarkBuf, innerSize: 44 })
+  )
     .png()
     .toFile(path.join(outDir, 'favicon.png'));
 
