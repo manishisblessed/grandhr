@@ -1,0 +1,9 @@
+# Ensure shell scripts and POSIX-only assets keep LF line endings even when
+# committed from Windows. Without this, `bash bootstrap-ec2.sh` on the EC2 fails
+# with "bad interpreter: /usr/bin/env\r: no such file or directory".
+*.sh        text eol=lf
+*.bash      text eol=lf
+Dockerfile  text eol=lf
+*.conf      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
