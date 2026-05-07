@@ -38,13 +38,12 @@ const vendorGroups = {
   'form-vendor': ['react-hook-form', '@hookform/*'],
   'zod-vendor': ['zod'],
   'qrcode-vendor': ['qrcode.react', 'qrcode'],
-  'dropzone-vendor': ['react-dropzone', 'attr-accept', 'file-selector'],
   'sonner-vendor': ['sonner', 'react-hot-toast', 'goober'],
   'sentry-vendor': ['@sentry/*', '@sentry-internal/*'],
   'http-vendor': ['axios', 'follow-redirects', 'form-data'],
   'misc-vendor': [
     'date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority', 'dompurify', 'tslib',
-    'prop-types', 'core-js',
+    'prop-types', 'core-js', 'react-dropzone', 'attr-accept', 'file-selector',
   ],
 };
 

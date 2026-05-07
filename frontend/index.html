@@ -35,6 +35,8 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+    <!-- Razorpay checkout.js is loaded on-demand by src/utils/razorpay.js —
+         no global script tag needed. This avoids 500+ preload warnings from
+         Razorpay eagerly prefetching its internal chunks on every page. -->
   </body>
 </html>
