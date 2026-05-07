@@ -13,7 +13,8 @@ import react from '@vitejs/plugin-react';
 const vendorGroups = {
   'react-vendor': [
     'react', 'react-dom', 'react-router', 'react-router-dom', '@remix-run/*', 'scheduler',
-    'react-reconciler', 'react-is', 'use-sync-external-store',
+    'react-reconciler', 'react-is', 'use-sync-external-store', 'react-dropzone', 'attr-accept',
+    'file-selector', 'prop-types',
   ],
   'motion-vendor': ['framer-motion', 'motion-dom', 'motion-utils'],
   'three-vendor': [
@@ -47,8 +48,7 @@ const vendorGroups = {
   'http-vendor': ['axios', 'follow-redirects', 'form-data'],
   'misc-vendor': [
     'date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority', 'dompurify', 'tslib',
-    'prop-types', 'core-js', 'react-dropzone', 'attr-accept', 'file-selector',
-    'immer', 'eventemitter3', 'decimal.js-light', 'es-toolkit',
+    'core-js', 'immer', 'eventemitter3', 'decimal.js-light', 'es-toolkit',
   ],
   'redux-vendor': [
     '@reduxjs/*', 'redux', 'redux-thunk', 'react-redux', 'reselect',
