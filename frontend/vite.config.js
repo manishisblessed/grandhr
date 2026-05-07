@@ -11,12 +11,16 @@ import react from '@vitejs/plugin-react';
  * Order is preserved — first match wins.
  */
 const vendorGroups = {
-  'react-vendor': ['react', 'react-dom', 'react-router', 'react-router-dom', 'scheduler', 'react-reconciler'],
+  'react-vendor': [
+    'react', 'react-dom', 'react-router', 'react-router-dom', '@remix-run/*', 'scheduler',
+    'react-reconciler', 'react-is', 'use-sync-external-store',
+  ],
   'motion-vendor': ['framer-motion', 'motion-dom', 'motion-utils'],
   'three-vendor': [
     'three', 'three-stdlib', 'three-mesh-bvh', 'meshline', 'maath', 'troika-*', 'webgl-sdf-generator',
-    '@react-three/*', '@react-spring/*', 'detect-gpu', 'detect-node-es', 'camera-controls', 'stats-gl',
-    'stats.js', 'hls.js', '@mediapipe/*', 'suspend-react', 'tunnel-rat', 'zustand', '@use-gesture/*',
+    '@react-three/*', '@react-spring/*', '@monogrid/*', 'detect-gpu', 'detect-node-es',
+    'camera-controls', 'stats-gl', 'stats.js', 'hls.js', '@mediapipe/*', 'suspend-react',
+    'tunnel-rat', 'zustand', '@use-gesture/*', 'react-use-measure', 'its-fine', 'fflate',
     'bidi-js', 'potpack', 'tiny-invariant', 'react-composer',
   ],
   'radix-vendor': [
@@ -32,7 +36,7 @@ const vendorGroups = {
   'pdf-vendor': [
     'html2canvas', 'jspdf', 'jspdf-autotable', '@react-pdf/*', 'pdfkit', 'fontkit', 'restructure',
     'tiny-inflate', 'unicode-*', 'png-js', 'canvg', 'rgbcolor', 'stackblur-canvas', 'raf',
-    'performance-now', '@babel/runtime',
+    'performance-now', '@babel/runtime', 'svg-pathdata',
   ],
   'docx-vendor': ['mammoth', 'jszip', 'pako'],
   'form-vendor': ['react-hook-form', '@hookform/*'],
@@ -44,6 +48,10 @@ const vendorGroups = {
   'misc-vendor': [
     'date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority', 'dompurify', 'tslib',
     'prop-types', 'core-js', 'react-dropzone', 'attr-accept', 'file-selector',
+    'immer', 'eventemitter3', 'decimal.js-light', 'es-toolkit',
+  ],
+  'redux-vendor': [
+    '@reduxjs/*', 'redux', 'redux-thunk', 'react-redux', 'reselect',
   ],
 };
 
