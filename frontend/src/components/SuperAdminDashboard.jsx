@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
+import { FullPageLoader } from './shared/RoleRoute';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -214,15 +216,15 @@ function Modal({ open, onClose, title, children, wide }) {
 // ═══════════════════════════════════════════════════════════════
 const SuperAdminDashboard = () => {
   const navigate = useNavigate();
-  const hrUser = JSON.parse(localStorage.getItem('hr_user') || 'null');
+  const { user, role, loading: authLoading, signOut } = useAuth();
 
-  // ── Auth guard ────────────────────────────────────────────
-  useEffect(() => {
-    if (!hrUser || hrUser.role !== 'SUPER_ADMIN') {
-      navigate('/hr-login', { replace: true });
-    }
-  }, []);
-
+  if (authLoading) return <FullPageLoader />;
+  if (!user) {
+    return <Navigate to="/hr/login" replace state={{ from: { pathname: '/super-admin' } }} />;
+  }
+  if (role !== 'SUPER_ADMIN') {
+    return <Navigate to="/hr/dashboard" replace />;
+  }
   // ── State ─────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
@@ -452,7 +454,7 @@ const SuperAdminDashboard = () => {
 
   // ── Tab change → fetch data ───────────────────────────────
   useEffect(() => {
-    if (!hrUser || hrUser.role !== 'SUPER_ADMIN') return;
+    if (role !== 'SUPER_ADMIN') return;
     switch (activeTab) {
       case 'overview': fetchDashboard(); break;
       case 'companies': fetchCompanies(1); break;
@@ -463,12 +465,11 @@ const SuperAdminDashboard = () => {
       case 'settings': fetchSettings(); break;
       default: break;
     }
-  }, [activeTab]);
+  }, [activeTab, role]);
 
-  const handleSignOut = () => {
-    localStorage.removeItem('hr_token');
-    localStorage.removeItem('hr_user');
-    navigate('/hr-login', { replace: true });
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/hr/login', { replace: true });
   };
 
   const formatDate = (d) => {
@@ -480,25 +481,6 @@ const SuperAdminDashboard = () => {
     if (!d) return '—';
     return new Date(d).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
-
-  if (!hrUser || hrUser.role !== 'SUPER_ADMIN') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800">Unauthorized Access</h2>
-          <p className="text-gray-500">You must be a Super Admin to view this page.</p>
-          <button onClick={() => navigate('/hr-login')} className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // ════════════════════════════════════════════════════════════
   //  TAB VIEWS
@@ -1227,12 +1209,12 @@ const SuperAdminDashboard = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Account</h3>
           <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xl font-bold">
-              {(hrUser?.email || 'S')[0].toUpperCase()}
+              {(user?.email || 'S')[0].toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold text-gray-900">{hrUser?.email || 'Super Admin'}</p>
+              <p className="font-semibold text-gray-900">{user?.email || 'Super Admin'}</p>
               <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 mt-1">
-                {hrUser?.role}
+                {user?.role}
               </span>
             </div>
           </div>
@@ -1310,11 +1292,15 @@ const SuperAdminDashboard = () => {
         <div className="px-3 py-4 border-t border-white/10">
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-              {(hrUser?.name || 'S')[0].toUpperCase()}
+              {(user?.employee?.firstName || user?.email || 'S')[0].toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-white truncate">{hrUser?.name || 'Super Admin'}</p>
-              <p className="text-[11px] text-slate-400 truncate">{hrUser?.email}</p>
+              <p className="text-sm font-medium text-white truncate">
+                {user?.employee?.firstName && user?.employee?.lastName
+                  ? `${user.employee.firstName} ${user.employee.lastName}`
+                  : user?.email || 'Super Admin'}
+              </p>
+              <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
             </div>
           </div>
           <button

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /hr/
+Disallow: /employee/
+Disallow: /super-admin
+Disallow: /reset-password
+Disallow: /api/
+
+Sitemap: https://grandhr.in/sitemap.xml

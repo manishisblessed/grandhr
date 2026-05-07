@@ -2,8 +2,66 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { z } from 'zod';
+import { sendRenderedEmail } from '../utils/email.util';
+import { renderPayslipReadyEmail } from '../utils/email-templates';
+import { createNotificationHelper } from './notification.controller';
 
 const prisma = new PrismaClient();
+
+const MONTH_LABELS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const monthLabel = (month: number, year: number) =>
+  `${MONTH_LABELS[Math.max(0, Math.min(11, month - 1))]} ${year}`;
+
+/**
+ * Notify the employee that their payslip is ready: in-app notification +
+ * branded email. Best-effort, never throws.
+ */
+const notifyPayslipReady = async (payrollId: string) => {
+  try {
+    const payroll = await prisma.payroll.findUnique({
+      where: { id: payrollId },
+      include: {
+        employee: {
+          include: {
+            user: { select: { id: true, email: true } },
+          },
+        },
+      },
+    });
+    if (!payroll || !payroll.employee.user) return;
+
+    const employeeName = `${payroll.employee.firstName} ${payroll.employee.lastName}`.trim();
+    const label = monthLabel(payroll.month, payroll.year);
+
+    await createNotificationHelper(
+      payroll.employee.user.id,
+      `Payslip ready · ${label}`,
+      `Your payslip for ${label} is now available. Net pay: ₹${Math.round(payroll.netSalary).toLocaleString('en-IN')}.`,
+      'SUCCESS',
+      '/employee/salary',
+    );
+
+    const rendered = renderPayslipReadyEmail({
+      employeeName,
+      monthLabel: label,
+      baseSalary: payroll.baseSalary,
+      allowances: payroll.allowances,
+      deductions: payroll.deductions,
+      tax: payroll.tax,
+      netSalary: payroll.netSalary,
+    });
+
+    sendRenderedEmail(payroll.employee.user.email, rendered).catch((err) =>
+      console.error('Failed to send payslip-ready email:', err),
+    );
+  } catch (error: any) {
+    console.error('notifyPayslipReady failed:', error?.message || error);
+  }
+};
 
 const createPayrollSchema = z.object({
   employeeId: z.string(),
@@ -251,8 +309,9 @@ export const getPayrollById = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Payroll not found' });
     }
 
-    // Check if user has access (own payroll or admin/hr)
-    if (userRole !== 'ADMIN' && userRole !== 'HR' && payroll.employee.userId !== userId) {
+    // Check if user has access (own payroll or any HR-level role)
+    const HR_ROLES = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR', 'MANAGER'];
+    if (!HR_ROLES.includes(userRole) && payroll.employee.userId !== userId) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -267,16 +326,23 @@ export const updatePayroll = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const updateData = req.body;
 
+    const previous = await prisma.payroll.findUnique({ where: { id } });
+    if (!previous) {
+      return res.status(404).json({ message: 'Payroll not found' });
+    }
+
     // Recalculate net salary if financial fields are updated
-    if (updateData.baseSalary || updateData.allowances || updateData.deductions || updateData.tax) {
-      const payroll = await prisma.payroll.findUnique({ where: { id } });
-      if (payroll) {
-        const baseSalary = updateData.baseSalary ?? payroll.baseSalary;
-        const allowances = updateData.allowances ?? payroll.allowances;
-        const deductions = updateData.deductions ?? payroll.deductions;
-        const tax = updateData.tax ?? payroll.tax;
-        updateData.netSalary = baseSalary + allowances - deductions - tax;
-      }
+    if (
+      updateData.baseSalary !== undefined ||
+      updateData.allowances !== undefined ||
+      updateData.deductions !== undefined ||
+      updateData.tax !== undefined
+    ) {
+      const baseSalary = updateData.baseSalary ?? previous.baseSalary;
+      const allowances = updateData.allowances ?? previous.allowances;
+      const deductions = updateData.deductions ?? previous.deductions;
+      const tax = updateData.tax ?? previous.tax;
+      updateData.netSalary = baseSalary + allowances - deductions - tax;
     }
 
     const payroll = await prisma.payroll.update({
@@ -294,8 +360,16 @@ export const updatePayroll = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    // When a payslip is finalised (PAID), send the employee a notification + email.
+    const becamePaid = previous.status !== 'PAID' && payroll.status === 'PAID';
+    if (becamePaid) {
+      void notifyPayslipReady(payroll.id);
+    }
+
     res.json({
-      message: 'Payroll updated successfully',
+      message: becamePaid
+        ? 'Payroll marked as paid — the employee has been notified.'
+        : 'Payroll updated successfully',
       payroll,
     });
   } catch (error: any) {

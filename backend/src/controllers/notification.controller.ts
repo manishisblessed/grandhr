@@ -150,7 +150,11 @@ export const createNotification = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * Helper function to create notifications (used by other services)
+ * Helper function to create notifications (used by other services).
+ *
+ * Side-effect: also fires a Web Push notification to every device the user
+ * has subscribed (best-effort; never throws). This way an in-app event becomes
+ * a phone notification automatically.
  */
 export const createNotificationHelper = async (
   userId: string,
@@ -160,7 +164,7 @@ export const createNotificationHelper = async (
   link?: string
 ) => {
   try {
-    return await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         userId,
         title,
@@ -169,6 +173,25 @@ export const createNotificationHelper = async (
         link,
       },
     });
+
+    // Fire-and-forget push. Avoid await so a slow push provider never blocks
+    // the in-app notification (which is the source of truth).
+    void (async () => {
+      try {
+        const { sendPushToUser } = await import('../services/push.service');
+        await sendPushToUser(userId, {
+          title,
+          body: message,
+          url: link,
+          tag: `notif-${notification.id}`,
+          data: { type, notificationId: notification.id },
+        });
+      } catch (err) {
+        console.warn('[notification] push dispatch failed:', err);
+      }
+    })();
+
+    return notification;
   } catch (error) {
     console.error('Failed to create notification:', error);
     return null;

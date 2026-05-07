@@ -1,113 +1,148 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../utils/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import api, { TOKEN_KEY, USER_KEY, setUnauthorizedHandler } from '../api/client';
+import { authApi } from '../api/auth';
 
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
+
+const ROLE_HOME = {
+  SUPER_ADMIN: '/super-admin',
+  COMPANY_ADMIN: '/hr/dashboard',
+  HR: '/hr/dashboard',
+  MANAGER: '/hr/dashboard',
+  EMPLOYEE: '/employee/dashboard',
+};
+
+export function getHomePathForRole(role) {
+  return ROLE_HOME[role] || '/hr/login';
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load existing session on mount; revalidate token via /auth/profile
   useEffect(() => {
-    // Check for existing session on mount
-    const checkSession = () => {
+    const init = async () => {
       try {
-        const token = localStorage.getItem('hr_token');
-        const userData = localStorage.getItem('hr_user');
-        
-        if (token && userData) {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
+        const token = localStorage.getItem(TOKEN_KEY);
+        const cached = localStorage.getItem(USER_KEY);
+        if (!token) {
+          setLoading(false);
+          return;
         }
-      } catch (error) {
-        console.error('Error checking session:', error);
-        localStorage.removeItem('hr_token');
-        localStorage.removeItem('hr_user');
+        if (cached) {
+          try { setUser(JSON.parse(cached)); } catch { /* ignore */ }
+        }
+        // Revalidate in the background (don't block first paint)
+        try {
+          const profile = await authApi.profile();
+          const u = profile?.user ?? profile;
+          if (u) {
+            setUser(u);
+            localStorage.setItem(USER_KEY, JSON.stringify(u));
+          }
+        } catch (e) {
+          // 401 handler will clear storage if token is bad
+        }
       } finally {
         setLoading(false);
       }
     };
-
-    checkSession();
+    init();
   }, []);
 
-  const signUp = async (email, password, name) => {
+  // Hook into 401 interceptor to clear session
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
+  const persist = useCallback((token, u) => {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
+    setUser(u);
+  }, []);
+
+  const signIn = useCallback(async (email, password) => {
     try {
-      const response = await api.post('/auth/register', {
-        email,
-        password,
-        name,
-      });
-      
-      const { user, token } = response.data;
-      
-      localStorage.setItem('hr_token', token);
-      localStorage.setItem('hr_user', JSON.stringify(user));
-      setUser(user);
-      
-      return { data: { user, token }, error: null };
-    } catch (error) {
+      const data = await authApi.login({ email, password });
+      const { user: u, token } = data;
+      persist(token, u);
+      return { data: { user: u, token }, error: null };
+    } catch (err) {
       return {
         data: null,
-        error: error.response?.data?.message || 'Registration failed',
+        error: err?.response?.data?.message || err.friendlyMessage || 'Login failed',
       };
     }
-  };
+  }, [persist]);
 
-  const signIn = async (email, password) => {
+  const signUp = useCallback(async (payload) => {
     try {
-      const response = await api.post('/auth/login', {
-        email,
-        password,
-      });
-      
-      const { user, token } = response.data;
-      
-      localStorage.setItem('hr_token', token);
-      localStorage.setItem('hr_user', JSON.stringify(user));
-      setUser(user);
-      
-      return { data: { user, token }, error: null };
-    } catch (error) {
+      const data = await authApi.register(payload);
+      const { user: u, token } = data;
+      persist(token, u);
+      return { data: { user: u, token }, error: null };
+    } catch (err) {
       return {
         data: null,
-        error: error.response?.data?.message || 'Login failed',
+        error: err?.response?.data?.message || err.friendlyMessage || 'Registration failed',
       };
     }
-  };
+  }, [persist]);
 
-  const signOut = async () => {
-    try {
-      // Optionally call backend logout endpoint
-      await api.post('/auth/logout').catch(() => {});
-    } catch (error) {
-      // Ignore errors on logout
-    } finally {
-      localStorage.removeItem('hr_token');
-      localStorage.removeItem('hr_user');
-      setUser(null);
-    }
-    
+  const signOut = useCallback(async () => {
+    try { await api.post('/auth/logout').catch(() => {}); } catch { /* ignore */ }
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
     return { error: null };
-  };
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    try {
+      const data = await authApi.profile();
+      const u = data?.user ?? data;
+      if (u) {
+        setUser(u);
+        localStorage.setItem(USER_KEY, JSON.stringify(u));
+      }
+      return u;
+    } catch { return null; }
+  }, []);
+
+  const role = user?.role || null;
+  const isAuthenticated = !!user;
+  const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isCompanyAdmin = role === 'COMPANY_ADMIN';
+  const isHR = role === 'HR' || isCompanyAdmin || isSuperAdmin;
+  const isManager = role === 'MANAGER';
+  const isEmployee = role === 'EMPLOYEE';
+  const homePath = getHomePathForRole(role);
 
   const value = {
     user,
     setUser,
     loading,
-    signUp,
     signIn,
+    signUp,
     signOut,
-    isAuthenticated: !!user,
+    refreshProfile,
+    isAuthenticated,
+    role,
+    isSuperAdmin,
+    isCompanyAdmin,
+    isHR,
+    isManager,
+    isEmployee,
+    homePath,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

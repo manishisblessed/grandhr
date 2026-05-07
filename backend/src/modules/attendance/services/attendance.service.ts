@@ -353,13 +353,21 @@ export class AttendanceService {
     const regularization = await prisma.attendanceRegularization.create({
       data: {
         employeeId: data.employeeId,
-        attendanceId: attendance?.id,
         date: data.date,
         clockIn: data.clockIn,
         clockOut: data.clockOut,
         reason: data.reason,
       },
     });
+
+    // The FK lives on Attendance (Attendance.regularizationId).
+    // Link the freshly-created regularization back to the attendance row, if any.
+    if (attendance) {
+      await prisma.attendance.update({
+        where: { id: attendance.id },
+        data: { regularizationId: regularization.id },
+      });
+    }
 
     return regularization;
   }
@@ -391,27 +399,33 @@ export class AttendanceService {
       },
     });
 
-    // If approved, update attendance
-    if (status === 'APPROVED' && regularization.attendanceId) {
-      const updateData: any = {};
-      if (regularization.clockIn) {
-        updateData.clockIn = regularization.clockIn;
-      }
-      if (regularization.clockOut) {
-        updateData.clockOut = regularization.clockOut;
-      }
-      if (updateData.clockIn && updateData.clockOut) {
-        updateData.totalHours = this.calculateHours(
-          updateData.clockIn,
-          updateData.clockOut
-        );
-      }
-      updateData.status = AttendanceStatus.REGULARIZED;
-
-      await prisma.attendance.update({
-        where: { id: regularization.attendanceId },
-        data: updateData,
+    // If approved, find the linked attendance (via the FK on Attendance) and apply the regularization values.
+    if (status === 'APPROVED') {
+      const linkedAttendance = await prisma.attendance.findUnique({
+        where: { regularizationId: regularizationId },
       });
+
+      if (linkedAttendance) {
+        const updateData: any = {};
+        if (regularization.clockIn) {
+          updateData.clockIn = regularization.clockIn;
+        }
+        if (regularization.clockOut) {
+          updateData.clockOut = regularization.clockOut;
+        }
+        if (updateData.clockIn && updateData.clockOut) {
+          updateData.totalHours = this.calculateHours(
+            updateData.clockIn,
+            updateData.clockOut
+          );
+        }
+        updateData.status = AttendanceStatus.REGULARIZED;
+
+        await prisma.attendance.update({
+          where: { id: linkedAttendance.id },
+          data: updateData,
+        });
+      }
     }
 
     return updated;

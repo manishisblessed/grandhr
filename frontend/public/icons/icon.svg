@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GrandHR">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#g)"/>
+  <g fill="#ffffff">
+    <path d="M132 132h44v110h64V132h44v248h-44V286h-64v94h-44z"/>
+    <path d="M298 132h62c40 0 70 24 70 64 0 30-16 51-42 60l52 124h-50l-46-114h-2v114h-44zm44 36v76h16c20 0 30-12 30-38s-10-38-30-38z"/>
+  </g>
+</svg>

@@ -1,8 +1,14 @@
+// Sentry must be the very first import so it can instrument Node before
+// anything else loads. The init function is a no-op when SENTRY_DSN is unset.
+import { initSentry, sentry } from './config/sentry';
+initSentry();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
+
+import { env } from './config/env';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -22,61 +28,98 @@ import companyRoutes from './routes/company.routes';
 import pricingRoutes from './routes/pricing.routes';
 import notificationRoutes from './routes/notification.routes';
 import superAdminRoutes from './routes/superAdmin.routes';
+import templateRoutes from './routes/template.routes';
+import emailTemplateRoutes from './routes/emailTemplate.routes';
+import reportsRoutes from './routes/reports.routes';
+import pushRoutes from './routes/push.routes';
 
 // Middleware
-import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware';
+import { apiLimiter } from './middleware/rateLimiter.middleware';
 import { activityLogger } from './middleware/activityLogger.middleware';
-
-dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 
-// Trust proxy (required when behind Nginx/load balancer)
+// ---- Trust proxy: required when behind Render/Heroku/Nginx so req.ip + rate
+// limiters work against the original client IP.
 app.set('trust proxy', 1);
 
-// Security Middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-}));
+// ---- Security headers. CSP allows the styles/scripts our frontend actually
+// uses (Razorpay checkout, Cloudinary images, Sentry endpoints). Frontend is
+// served from a different origin in production so connect-src must allow it.
+app.use(
+  helmet({
+    contentSecurityPolicy: env.isProduction
+      ? {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: [
+              "'self'",
+              "'unsafe-inline'",
+              'https://checkout.razorpay.com',
+            ],
+            imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+            connectSrc: [
+              "'self'",
+              'https:',
+              'https://*.sentry.io',
+              'https://*.ingest.sentry.io',
+            ],
+            frameSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+          },
+        }
+      : false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 
-// CORS: allow web and mobile app. In production, default to * if not set so mobile app can connect.
-const corsOrigin = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
-  : process.env.NODE_ENV === 'production'
-    ? '*'  // allow mobile app and any web client
+// ---- CORS. CORS_ORIGIN is a comma-separated list. In dev we allow any origin
+// so the Vite proxy/mobile-emulator works; in prod we whitelist explicitly.
+const corsOrigin = env.CORS_ORIGINS.length
+  ? env.CORS_ORIGINS
+  : env.isProduction
+    ? false // require explicit whitelist in prod
     : true;
-const corsOptions = {
-  origin: corsOrigin,
-  credentials: corsOrigin !== '*',
-  optionsSuccessStatus: 200,
-};
 
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+    optionsSuccessStatus: 200,
+  }),
+);
 
-// Body Parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Activity Logging (before routes)
 app.use(activityLogger);
 
-// Rate Limiting
-app.use('/api/', apiLimiter);
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'GrandHR API is running' });
+// ---- Health endpoints (no rate limit, no auth). /healthz is for liveness
+// probes (just confirms the process answers); /readyz pings the DB so a load
+// balancer can avoid routing to a node with a broken Prisma connection.
+app.get('/healthz', (_req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), env: env.NODE_ENV });
+});
+app.get('/readyz', async (_req, res) => {
+  try {
+    await prisma.$queryRawUnsafe('SELECT 1');
+    res.json({ status: 'ready', db: 'up' });
+  } catch (err: any) {
+    res.status(503).json({ status: 'unready', db: 'down', error: err?.message });
+  }
+});
+// Back-compat alias used by older clients.
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', message: 'GrandHR API is running', env: env.NODE_ENV });
 });
 
-// Routes
+// ---- Rate limit the API surface (health endpoints are excluded above).
+app.use('/api/', apiLimiter);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/leaves', leaveRoutes);
@@ -94,45 +137,66 @@ app.use('/api/company', companyRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/templates', templateRoutes);
+app.use('/api/email-templates', emailTemplateRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/push', pushRoutes);
 
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
-});
+// ---- Final error handler. Sentry captures unhandled errors via its automatic
+// instrumentation; this handler turns them into clean JSON for the client and
+// avoids leaking stack traces in production.
+app.use(
+  (err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (env.SENTRY.enabled) {
+      try {
+        sentry.captureException(err);
+      } catch (e) {
+        console.warn('[sentry] capture failed:', e);
+      }
+    }
+    if (!res.headersSent) {
+      console.error(err.stack || err);
+    }
+    res.status(err.status || 500).json({
+      message: err.message || 'Internal server error',
+      ...(env.isProduction ? {} : { stack: err.stack }),
+    });
+  },
+);
 
-// Export app for Vercel serverless functions
+// Export the app for serverless platforms.
 export default app;
 
-// Only start server if not in Vercel environment
-if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
-  const PORT = process.env.PORT || 5000;
-  
-  app.listen(PORT, () => {
-    console.log(`🚀 GrandHR Backend Server running on port ${PORT}`);
+// Standalone server boot (Render, Docker, plain node).
+if (!env.IS_VERCEL) {
+  app.listen(env.PORT, () => {
+    console.log(`\n🚀 GrandHR Backend Server running on port ${env.PORT} [${env.NODE_ENV}]`);
   });
 
-  // Start automation scheduler (only if database is configured)
-  if (process.env.DATABASE_URL && 
-      (process.env.DATABASE_URL.startsWith('mongodb://') || 
-       process.env.DATABASE_URL.startsWith('mongodb+srv://'))) {
-    import('./services/scheduler.service').then(({ SchedulerService }) => {
-      SchedulerService.start();
-    }).catch((error) => {
-      console.warn('⚠️  Could not start scheduler:', error.message);
-    });
+  // Scheduler boots only when DATABASE_URL is configured. Postgres + Mongo
+  // both supported (the legacy Mongo path is kept for backwards compat).
+  const dbUrl = env.DATABASE_URL;
+  if (dbUrl && /^(postgres|postgresql|mongodb(\+srv)?):\/\//.test(dbUrl)) {
+    import('./services/scheduler.service')
+      .then(({ SchedulerService }) => SchedulerService.start())
+      .catch((error) => console.warn('⚠️  Could not start scheduler:', error.message));
   } else {
     console.warn('⚠️  DATABASE_URL not configured, scheduler disabled');
   }
 
-  // Graceful shutdown
-  process.on('beforeExit', async () => {
-    const { SchedulerService } = await import('./services/scheduler.service');
-    SchedulerService.stop();
-    await prisma.$disconnect();
-  });
+  const shutdown = async (signal: string) => {
+    console.log(`\n${signal} received — closing connections.`);
+    try {
+      const { SchedulerService } = await import('./services/scheduler.service');
+      SchedulerService.stop();
+    } catch {
+      /* scheduler may not have started */
+    }
+    await prisma.$disconnect().catch(() => {});
+    if (env.SENTRY.enabled) await sentry.flush(2000).catch(() => {});
+    process.exit(0);
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('beforeExit', () => prisma.$disconnect().catch(() => {}));
 }
-

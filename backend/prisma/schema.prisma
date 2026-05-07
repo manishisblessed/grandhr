@@ -1,13 +1,17 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// Database: PostgreSQL on Neon. Pooled URL for queries (DATABASE_URL),
+// direct URL for migrations (DIRECT_URL).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
@@ -25,45 +29,45 @@ enum Permission {
   EMPLOYEE_UPDATE
   EMPLOYEE_DELETE
   EMPLOYEE_EXPORT
-  
+
   // Attendance permissions
   ATTENDANCE_VIEW
   ATTENDANCE_CREATE
   ATTENDANCE_UPDATE
   ATTENDANCE_DELETE
   ATTENDANCE_APPROVE
-  
+
   // Leave permissions
   LEAVE_VIEW
   LEAVE_CREATE
   LEAVE_UPDATE
   LEAVE_APPROVE
   LEAVE_REJECT
-  
+
   // Payroll permissions
   PAYROLL_VIEW
   PAYROLL_CREATE
   PAYROLL_UPDATE
   PAYROLL_PROCESS
   PAYROLL_LOCK
-  
+
   // Recruitment permissions
   RECRUITMENT_VIEW
   RECRUITMENT_CREATE
   RECRUITMENT_UPDATE
   RECRUITMENT_DELETE
-  
+
   // Performance permissions
   PERFORMANCE_VIEW
   PERFORMANCE_CREATE
   PERFORMANCE_UPDATE
   PERFORMANCE_APPROVE
-  
+
   // Company permissions
   COMPANY_VIEW
   COMPANY_UPDATE
   COMPANY_DELETE
-  
+
   // Settings permissions
   SETTINGS_VIEW
   SETTINGS_UPDATE
@@ -130,125 +134,142 @@ enum AttendanceStatus {
 }
 
 model User {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId     String?  @db.ObjectId
-  company       Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  email         String   @unique
-  password      String
-  role          UserRole @default(EMPLOYEE)
-  refreshToken  String?
-  isActive      Boolean  @default(true)
-  lastLogin     DateTime?
-  invitedBy     String?  @db.ObjectId
-  invitedAt     DateTime?
-  invited       Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  employee      Employee?
-  userRoles     UserRolePermission[]
-  tickets       SupportTicket[]
-  ticketReplies TicketReply[]
-  auditLogs     AuditLog[]
-  activityLogs  ActivityLog[]
+  id                     String                  @id @default(cuid())
+  companyId              String?
+  company                Company?                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  email                  String                  @unique
+  password               String
+  role                   UserRole                @default(EMPLOYEE)
+  refreshToken           String?
+  isActive               Boolean                 @default(true)
+  lastLogin              DateTime?
+  invitedBy              String?
+  invitedAt              DateTime?
+  invited                Boolean                 @default(false)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  employee               Employee?
+  userRoles              UserRolePermission[]
+  tickets                SupportTicket[]
+  ticketReplies          TicketReply[]
+  auditLogs              AuditLog[]
+  activityLogs           ActivityLog[]
   notificationPreference NotificationPreference?
-  
+  pushSubscriptions      PushSubscription[]
+
   @@index([companyId])
   @@map("users")
 }
 
+// Web Push subscription endpoints (one user can have multiple devices).
+model PushSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint    String   @unique
+  p256dh      String
+  auth        String
+  userAgent   String?
+  lastUsedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
 // Role & Permission Matrix
 model Role {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id          String               @id @default(cuid())
+  companyId   String?
+  company     Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name        String
   description String?
   permissions Permission[]
-  isSystem    Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isSystem    Boolean              @default(false)
+  isActive    Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
   userRoles   UserRolePermission[]
-  
+
   @@index([companyId, name])
   @@index([companyId])
   @@map("roles")
 }
 
 model UserRolePermission {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId    String?  @db.ObjectId
-  role      Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId      String?
+  role        Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
   permissions Permission[]
-  grantedBy String?  @db.ObjectId
-  grantedAt DateTime @default(now())
-  expiresAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  grantedBy   String?
+  grantedAt   DateTime     @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
   @@index([userId])
   @@index([roleId])
   @@map("user_role_permissions")
 }
 
 model Employee {
-  id                String            @id @default(auto()) @map("_id") @db.ObjectId
-  companyId         String?           @db.ObjectId
-  company           Company?          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  userId            String            @unique @db.ObjectId
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  employeeId        String
-  firstName         String
-  lastName          String
-  middleName        String?
-  phone             String?
-  alternatePhone    String?
-  email             String?
-  dateOfBirth       DateTime?
-  gender            String?
-  maritalStatus     String?
-  address           String?
-  city              String?
-  state             String?
-  zipCode           String?
-  country           String?
-  locationId        String?           @db.ObjectId
-  location          Location?         @relation(fields: [locationId], references: [id])
-  departmentId      String?           @db.ObjectId
-  department        Department?       @relation(fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  designationId     String?           @db.ObjectId
-  designation       Designation?      @relation(fields: [designationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  joiningDate       DateTime          @default(now())
-  confirmationDate  DateTime?
-  probationEndDate  DateTime?
-  employmentStatus  EmploymentStatus  @default(PROBATION)
-  salary            Float?
-  shiftId           String?           @db.ObjectId
-  shift             Shift?            @relation(fields: [shiftId], references: [id])
-  managerId         String?           @db.ObjectId
-  manager           Employee?         @relation("ManagerEmployee", fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  subordinates      Employee[]        @relation("ManagerEmployee")
-  isActive          Boolean           @default(true)
-  exitDate          DateTime?
-  exitReason        String?
-  customFields      Json?             // Store custom field values
-  kycDetails        Json?             // KYC documents metadata
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  lifecycleEvents   EmployeeLifecycleEvent[]
-  leaves            Leave[]
-  leaveBalances     LeaveBalance[]
-  attendances       Attendance[]
-  payrolls          Payroll[]
-  documents         Document[]
+  id                 String                   @id @default(cuid())
+  companyId          String?
+  company            Company?                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId             String                   @unique
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeId         String
+  firstName          String
+  lastName           String
+  middleName         String?
+  phone              String?
+  alternatePhone     String?
+  email              String?
+  dateOfBirth        DateTime?
+  gender             String?
+  maritalStatus      String?
+  address            String?
+  city               String?
+  state              String?
+  zipCode            String?
+  country            String?
+  locationId         String?
+  location           Location?                @relation(fields: [locationId], references: [id])
+  departmentId       String?
+  department         Department?              @relation(fields: [departmentId], references: [id])
+  designationId      String?
+  designation        Designation?             @relation(fields: [designationId], references: [id])
+  joiningDate        DateTime                 @default(now())
+  confirmationDate   DateTime?
+  probationEndDate   DateTime?
+  employmentStatus   EmploymentStatus         @default(PROBATION)
+  salary             Float?
+  shiftId            String?
+  shift              Shift?                   @relation(fields: [shiftId], references: [id])
+  managerId          String?
+  manager            Employee?                @relation("ManagerEmployee", fields: [managerId], references: [id])
+  subordinates       Employee[]               @relation("ManagerEmployee")
+  isActive           Boolean                  @default(true)
+  exitDate           DateTime?
+  exitReason         String?
+  customFields       Json?
+  kycDetails         Json?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  lifecycleEvents    EmployeeLifecycleEvent[]
+  leaves             Leave[]
+  leaveBalances      LeaveBalance[]
+  attendances        Attendance[]
+  payrolls           Payroll[]
+  documents          Document[]
   generatedDocuments GeneratedDocument[]
-  reviews           PerformanceReview[] @relation("Reviewee")
-  reviewsGiven      PerformanceReview[] @relation("Reviewer")
+  reviews            PerformanceReview[]      @relation("Reviewee")
+  reviewsGiven       PerformanceReview[]      @relation("Reviewer")
   goals              Goal[]
   salaryStructures   SalaryStructure[]
-  
+
   @@unique([companyId, employeeId])
   @@index([companyId])
   @@index([managerId])
@@ -261,22 +282,22 @@ model Employee {
 
 // Employee Lifecycle Events
 model EmployeeLifecycleEvent {
-  id          String            @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId  String            @db.ObjectId
-  employee    Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  eventType   LifecycleEventType
-  eventDate   DateTime
+  id            String             @id @default(cuid())
+  employeeId    String
+  employee      Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  eventType     LifecycleEventType
+  eventDate     DateTime
   previousValue Json?
-  newValue    Json?
-  reason      String?
-  initiatedBy String?           @db.ObjectId
-  approvedBy  String?           @db.ObjectId
-  approvedAt  DateTime?
-  status      String            @default("PENDING") // PENDING, APPROVED, REJECTED
-  metadata    Json?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  
+  newValue      Json?
+  reason        String?
+  initiatedBy   String?
+  approvedBy    String?
+  approvedAt    DateTime?
+  status        String             @default("PENDING")
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
   @@index([employeeId])
   @@index([eventType])
   @@index([eventDate])
@@ -285,68 +306,68 @@ model EmployeeLifecycleEvent {
 
 // Leave Policies
 model LeavePolicy {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId       String   @db.ObjectId
-  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name            String
-  leaveType       LeaveType
-  maxDays         Int?
-  accrualRate     Float?   // Days per month
-  carryForward    Boolean  @default(false)
-  maxCarryForward Int?
-  requiresApproval Boolean @default(true)
-  halfDayAllowed  Boolean  @default(false)
-  hourlyAllowed   Boolean  @default(false)
-  effectiveFrom   DateTime
-  effectiveTo     DateTime?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id               String    @id @default(cuid())
+  companyId        String
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name             String
+  leaveType        LeaveType
+  maxDays          Int?
+  accrualRate      Float?
+  carryForward     Boolean   @default(false)
+  maxCarryForward  Int?
+  requiresApproval Boolean   @default(true)
+  halfDayAllowed   Boolean   @default(false)
+  hourlyAllowed    Boolean   @default(false)
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
   @@index([companyId, leaveType])
   @@map("leave_policies")
 }
 
 // Leave Balance
 model LeaveBalance {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId      String   @db.ObjectId
-  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  leaveType       LeaveType
-  accrued         Float    @default(0)
-  used            Float    @default(0)
-  balance         Float    @default(0)
-  carryForward    Float    @default(0)
-  year            Int
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id           String    @id @default(cuid())
+  employeeId   String
+  employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType    LeaveType
+  accrued      Float     @default(0)
+  used         Float     @default(0)
+  balance      Float     @default(0)
+  carryForward Float     @default(0)
+  year         Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
   @@unique([employeeId, leaveType, year])
   @@index([employeeId, year])
   @@map("leave_balances")
 }
 
 model Leave {
-  id              String          @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId      String          @db.ObjectId
-  employee        Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  type            LeaveType
-  durationType    LeaveDurationType @default(FULL_DAY)
-  startDate       DateTime
-  endDate         DateTime
-  startTime       String?         // For hourly leave
-  endTime         String?         // For hourly leave
-  days            Float            // Can be decimal for half-day/hourly
-  hours           Float?           // For hourly leave
-  reason          String?
-  status          LeaveStatus      @default(PENDING)
-  approvedBy      String?          @db.ObjectId
-  approvedAt      DateTime?
-  rejectedReason  String?
-  appliedAt       DateTime         @default(now())
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  
+  id             String            @id @default(cuid())
+  employeeId     String
+  employee       Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type           LeaveType
+  durationType   LeaveDurationType @default(FULL_DAY)
+  startDate      DateTime
+  endDate        DateTime
+  startTime      String?
+  endTime        String?
+  days           Float
+  hours          Float?
+  reason         String?
+  status         LeaveStatus       @default(PENDING)
+  approvedBy     String?
+  approvedAt     DateTime?
+  rejectedReason String?
+  appliedAt      DateTime          @default(now())
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
   @@index([employeeId])
   @@index([status])
   @@index([startDate, endDate])
@@ -355,70 +376,70 @@ model Leave {
 
 // Holiday Calendar
 model Holiday {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String   @db.ObjectId
+  id          String   @id @default(cuid())
+  companyId   String
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name        String
   date        DateTime
   isRecurring Boolean  @default(false)
-  locationId  String?   @db.ObjectId // Optional: location-specific holidays
+  locationId  String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@index([companyId, date])
   @@map("holidays")
 }
 
 // Shift Management
 model Shift {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId     String   @db.ObjectId
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name          String
-  code          String?
-  startTime     String   // HH:mm format
-  endTime       String   // HH:mm format
-  breakDuration Int      @default(0) // in minutes
-  gracePeriod   Int      @default(15) // in minutes
-  lateThreshold Int      @default(30) // in minutes
-  earlyThreshold Int     @default(30) // in minutes
-  workingHours  Float
-  isFlexible    Boolean  @default(false)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  employees     Employee[]
-  attendances   Attendance[]
-  
+  id             String       @id @default(cuid())
+  companyId      String
+  company        Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name           String
+  code           String?
+  startTime      String
+  endTime        String
+  breakDuration  Int          @default(0)
+  gracePeriod    Int          @default(15)
+  lateThreshold  Int          @default(30)
+  earlyThreshold Int          @default(30)
+  workingHours   Float
+  isFlexible     Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  employees      Employee[]
+  attendances    Attendance[]
+
   @@unique([companyId, code])
   @@index([companyId])
   @@map("shifts")
 }
 
 model Attendance {
-  id                String           @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId        String           @db.ObjectId
-  employee          Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  shiftId           String?          @db.ObjectId
-  shift             Shift?           @relation(fields: [shiftId], references: [id])
-  date              DateTime
-  clockIn           DateTime?
-  clockOut          DateTime?
-  breakDuration     Int?             @default(0) // in minutes
-  totalHours        Float?
-  status            AttendanceStatus @default(PRESENT)
-  isLate            Boolean          @default(false)
-  isEarlyDeparture  Boolean          @default(false)
-  lateMinutes       Int?             @default(0)
-  earlyMinutes      Int?             @default(0)
-  regularizationId  String?          @unique @db.ObjectId
-  regularization    AttendanceRegularization? @relation(fields: [regularizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  notes             String?
-  approvedBy        String?          @db.ObjectId
-  approvedAt        DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id               String                    @id @default(cuid())
+  employeeId       String
+  employee         Employee                  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shiftId          String?
+  shift            Shift?                    @relation(fields: [shiftId], references: [id])
+  date             DateTime
+  clockIn          DateTime?
+  clockOut         DateTime?
+  breakDuration    Int?                      @default(0)
+  totalHours       Float?
+  status           AttendanceStatus          @default(PRESENT)
+  isLate           Boolean                   @default(false)
+  isEarlyDeparture Boolean                   @default(false)
+  lateMinutes      Int?                      @default(0)
+  earlyMinutes     Int?                      @default(0)
+  regularizationId String?                   @unique
+  regularization   AttendanceRegularization? @relation(fields: [regularizationId], references: [id])
+  notes            String?
+  approvedBy       String?
+  approvedAt       DateTime?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
 
   @@unique([employeeId, date])
   @@index([shiftId])
@@ -428,21 +449,20 @@ model Attendance {
 
 // Attendance Regularization Requests
 model AttendanceRegularization {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId  String   @db.ObjectId
-  attendanceId String?  @unique @db.ObjectId
-  attendance  Attendance? @relation
-  date        DateTime
-  clockIn     DateTime?
-  clockOut    DateTime?
-  reason      String
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  approvedBy  String?  @db.ObjectId
-  approvedAt  DateTime?
+  id             String      @id @default(cuid())
+  employeeId     String
+  attendance     Attendance?
+  date           DateTime
+  clockIn        DateTime?
+  clockOut       DateTime?
+  reason         String
+  status         String      @default("PENDING")
+  approvedBy     String?
+  approvedAt     DateTime?
   rejectedReason String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
   @@index([employeeId])
   @@index([status])
   @@map("attendance_regularizations")
@@ -450,9 +470,9 @@ model AttendanceRegularization {
 
 // Monthly Attendance Summary
 model AttendanceSummary {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId  String   @db.ObjectId
-  month       Int      // 1-12
+  id          String   @id @default(cuid())
+  employeeId  String
+  month       Int
   year        Int
   totalDays   Int
   presentDays Int      @default(0)
@@ -463,25 +483,24 @@ model AttendanceSummary {
   totalHours  Float    @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@index([employeeId, month, year])
   @@map("attendance_summaries")
 }
 
 // Salary Structure
 model SalaryStructure {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId    String   @db.ObjectId
-  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id            String    @id @default(cuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   effectiveFrom DateTime
   effectiveTo   DateTime?
   baseSalary    Float
-  components    Json     // Earnings and deductions breakdown
-  // Structure: { earnings: [{ name, amount }], deductions: [{ name, amount }] }
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  components    Json
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
   @@index([employeeId])
   @@index([effectiveFrom])
   @@map("salary_structures")
@@ -489,49 +508,49 @@ model SalaryStructure {
 
 // Payroll Calendar
 model PayrollCalendar {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String   @db.ObjectId
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name        String
-  payPeriod   String   // MONTHLY, BIWEEKLY, WEEKLY
-  payDay      Int      // Day of month/week
-  cutoffDate  Int      // Day of month for cutoff
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name       String
+  payPeriod  String
+  payDay     Int
+  cutoffDate Int
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@index([companyId])
   @@map("payroll_calendars")
 }
 
 model Payroll {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId    String   @db.ObjectId
-  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  month         Int      // 1-12
-  year          Int
-  baseSalary    Float
-  allowances    Float    @default(0)
-  deductions    Float    @default(0)
+  id             String    @id @default(cuid())
+  employeeId     String
+  employee       Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month          Int
+  year           Int
+  baseSalary     Float
+  allowances     Float     @default(0)
+  deductions     Float     @default(0)
   // Statutory components (Indian compliance ready)
-  pf            Float    @default(0)
-  esi            Float    @default(0)
-  pt             Float    @default(0)
-  tds            Float    @default(0)
-  tax            Float    @default(0)
+  pf             Float     @default(0)
+  esi            Float     @default(0)
+  pt             Float     @default(0)
+  tds            Float     @default(0)
+  tax            Float     @default(0)
   netSalary      Float
   paidDate       DateTime?
-  status         String   @default("PENDING") // PENDING, PROCESSED, PAID, LOCKED, CANCELLED
-  isLocked       Boolean  @default(false)
+  status         String    @default("PENDING")
+  isLocked       Boolean   @default(false)
   lockedAt       DateTime?
-  lockedBy       String?  @db.ObjectId
+  lockedBy       String?
   payslipUrl     String?
   notes          String?
   attendanceDays Int?
   leaveDays      Int?
   lopDays        Int?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@unique([employeeId, month, year])
   @@index([employeeId, year, month])
@@ -540,34 +559,34 @@ model Payroll {
 }
 
 model Document {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId  String   @db.ObjectId
-  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  name        String
-  type        String   // RESUME, CONTRACT, CERTIFICATE, ID_PROOF, etc.
-  fileUrl     String
-  uploadedBy  String?  @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name       String
+  type       String
+  fileUrl    String
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@map("documents")
 }
 
 // Generated Documents - Stores all HR documents generated by users
 model GeneratedDocument {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId  String?  @db.ObjectId
-  employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  userId      String   @db.ObjectId
-  documentType String  // OFFER_LETTER, APPOINTMENT_LETTER, SALARY_SLIP, etc.
-  title       String
-  content     String   // HTML or text content
-  pdfData     String?  // Base64 encoded PDF or file URL
-  metadata    Json?    // Document-specific data (employee name, date, etc.)
-  companyId   String?  @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id           String    @id @default(cuid())
+  employeeId   String?
+  employee     Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  userId       String
+  documentType String
+  title        String
+  content      String
+  pdfData      String?
+  metadata     Json?
+  companyId    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
   @@index([userId])
   @@index([employeeId])
   @@index([companyId])
@@ -578,53 +597,53 @@ model GeneratedDocument {
 // ========== RECRUITMENT (ATS) MODULE ==========
 
 model JobRequisition {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId     String   @db.ObjectId
-  title         String
-  department    String?
-  location      String?
-  jobType       String   // FULL_TIME, PART_TIME, CONTRACT
-  experience    String?
-  description   String?
-  requirements  String?
-  status        String   @default("OPEN") // OPEN, ON_HOLD, CLOSED, FILLED
-  openings      Int      @default(1)
-  filled        Int      @default(0)
-  createdBy     String   @db.ObjectId
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  candidates    Candidate[]
-  
+  id           String      @id @default(cuid())
+  companyId    String
+  title        String
+  department   String?
+  location     String?
+  jobType      String
+  experience   String?
+  description  String?
+  requirements String?
+  status       String      @default("OPEN")
+  openings     Int         @default(1)
+  filled       Int         @default(0)
+  createdBy    String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  candidates   Candidate[]
+
   @@index([companyId])
   @@index([status])
   @@map("job_requisitions")
 }
 
 model Candidate {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId       String   @db.ObjectId
-  jobRequisitionId String?  @db.ObjectId
-  jobRequisition  JobRequisition? @relation(fields: [jobRequisitionId], references: [id])
-  firstName       String
-  lastName        String
-  email           String
-  phone           String?
-  resumeUrl       String?
-  coverLetter     String?
-  currentStage    String   @default("APPLIED") // APPLIED, SCREENING, INTERVIEW, OFFER, HIRED, REJECTED
-  source          String?  // REFERRAL, JOB_PORTAL, DIRECT, etc.
-  experience      Float?
-  currentSalary   Float?
-  expectedSalary  Float?
-  noticePeriod    Int?     // in days
-  status          String   @default("ACTIVE") // ACTIVE, HIRED, REJECTED, WITHDRAWN
-  notes           String?
-  convertedToEmployeeId String? @db.ObjectId
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  interviews      Interview[]
-  stageHistory    CandidateStageHistory[]
-  
+  id                    String                  @id @default(cuid())
+  companyId             String
+  jobRequisitionId      String?
+  jobRequisition        JobRequisition?         @relation(fields: [jobRequisitionId], references: [id])
+  firstName             String
+  lastName              String
+  email                 String
+  phone                 String?
+  resumeUrl             String?
+  coverLetter           String?
+  currentStage          String                  @default("APPLIED")
+  source                String?
+  experience            Float?
+  currentSalary         Float?
+  expectedSalary        Float?
+  noticePeriod          Int?
+  status                String                  @default("ACTIVE")
+  notes                 String?
+  convertedToEmployeeId String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  interviews            Interview[]
+  stageHistory          CandidateStageHistory[]
+
   @@index([companyId])
   @@index([jobRequisitionId])
   @@index([currentStage])
@@ -633,36 +652,36 @@ model Candidate {
 }
 
 model CandidateStageHistory {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  candidateId String   @db.ObjectId
+  id          String    @id @default(cuid())
+  candidateId String
   candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   fromStage   String?
   toStage     String
-  changedBy   String?  @db.ObjectId
+  changedBy   String?
   notes       String?
-  createdAt   DateTime @default(now())
-  
+  createdAt   DateTime  @default(now())
+
   @@index([candidateId])
   @@map("candidate_stage_history")
 }
 
 model Interview {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  candidateId String   @db.ObjectId
-  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  type        String   // PHONE, VIDEO, IN_PERSON, TECHNICAL, HR, FINAL
-  scheduledAt DateTime
-  duration    Int      // in minutes
-  interviewerIds String[] // Array of user IDs
-  location    String?
-  meetingLink String?
-  status      String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, RESCHEDULED
-  feedback    String?
-  rating      Int?     // 1-5
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id             String    @id @default(cuid())
+  candidateId    String
+  candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  type           String
+  scheduledAt    DateTime
+  duration       Int
+  interviewerIds String[]
+  location       String?
+  meetingLink    String?
+  status         String    @default("SCHEDULED")
+  feedback       String?
+  rating         Int?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
   @@index([candidateId])
   @@index([scheduledAt])
   @@map("interviews")
@@ -671,67 +690,67 @@ model Interview {
 // ========== PERFORMANCE MANAGEMENT MODULE ==========
 
 model ReviewCycle {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String   @db.ObjectId
-  name        String
-  type        String   // QUARTERLY, HALF_YEARLY, ANNUAL
-  startDate   DateTime
-  endDate     DateTime
-  selfReviewDeadline DateTime?
+  id                    String              @id @default(cuid())
+  companyId             String
+  name                  String
+  type                  String
+  startDate             DateTime
+  endDate               DateTime
+  selfReviewDeadline    DateTime?
   managerReviewDeadline DateTime?
-  status      String   @default("DRAFT") // DRAFT, ACTIVE, COMPLETED, CLOSED
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  reviews     PerformanceReview[]
-  goals       Goal[]
-  
+  status                String              @default("DRAFT")
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  reviews               PerformanceReview[]
+  goals                 Goal[]
+
   @@index([companyId])
   @@index([status])
   @@map("review_cycles")
 }
 
 model Goal {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId  String   @db.ObjectId
-  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  reviewCycleId String? @db.ObjectId
-  reviewCycle ReviewCycle? @relation(fields: [reviewCycleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  title       String
-  description String?
-  type        String   // OKR, KRA, GOAL
-  target      String?
-  progress    Float    @default(0) // 0-100
-  status      String   @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
-  dueDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id            String       @id @default(cuid())
+  employeeId    String
+  employee      Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewCycleId String?
+  reviewCycle   ReviewCycle? @relation(fields: [reviewCycleId], references: [id])
+  title         String
+  description   String?
+  type          String
+  target        String?
+  progress      Float        @default(0)
+  status        String       @default("ACTIVE")
+  dueDate       DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
   @@index([employeeId])
   @@index([reviewCycleId])
   @@map("goals")
 }
 
 model PerformanceReview {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  employeeId  String   @db.ObjectId
-  employee    Employee @relation("Reviewee", fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  reviewerId  String   @db.ObjectId
-  reviewer    Employee @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reviewCycleId String? @db.ObjectId
-  reviewCycle ReviewCycle? @relation(fields: [reviewCycleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  period      String   // e.g., "Q1 2024", "2024 Annual"
-  rating      Int?     // 1-5
-  selfRating  Int?
-  feedback    String?
-  selfFeedback String?
-  goals       String?
-  achievements String?
-  status      String   @default("DRAFT") // DRAFT, SELF_REVIEW, MANAGER_REVIEW, APPROVED, CLOSED
-  submittedAt DateTime?
-  approvedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id            String       @id @default(cuid())
+  employeeId    String
+  employee      Employee     @relation("Reviewee", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewerId    String
+  reviewer      Employee     @relation("Reviewer", fields: [reviewerId], references: [id])
+  reviewCycleId String?
+  reviewCycle   ReviewCycle? @relation(fields: [reviewCycleId], references: [id])
+  period        String
+  rating        Int?
+  selfRating    Int?
+  feedback      String?
+  selfFeedback  String?
+  goals         String?
+  achievements  String?
+  status        String       @default("DRAFT")
+  submittedAt   DateTime?
+  approvedAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
   @@index([employeeId])
   @@index([reviewCycleId])
   @@index([status])
@@ -739,15 +758,15 @@ model PerformanceReview {
 }
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
+  id        String   @id @default(cuid())
+  userId    String
   title     String
   message   String
-  type      String   // INFO, SUCCESS, WARNING, ERROR
+  type      String
   isRead    Boolean  @default(false)
   link      String?
   createdAt DateTime @default(now())
-  
+
   @@index([userId])
   @@map("notifications")
 }
@@ -756,50 +775,50 @@ model Notification {
 
 // Multi-tenant Company/Organization support
 model Company {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  legalName       String?
-  domain          String?
-  logo            String?
-  address         String?
-  city            String?
-  state           String?
-  zipCode         String?
-  country         String?
-  phone           String?
-  email           String?
-  website         String?
-  taxId           String?
+  id                 String              @id @default(cuid())
+  name               String
+  legalName          String?
+  domain             String?
+  logo               String?
+  address            String?
+  city               String?
+  state              String?
+  zipCode            String?
+  country            String?
+  phone              String?
+  email              String?
+  website            String?
+  taxId              String?
   registrationNumber String?
-  panNumber       String?
-  gstNumber       String?
-  isActive        Boolean  @default(true)
-  onboardingDate  DateTime?
-  settings        Json?    // Flexible company settings
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  employees       Employee[]
-  users           User[]
-  locations       Location[]
-  departments     Department[]
-  designations    Designation[]
-  roles           Role[]
-  configs         Configuration[]
-  automations     AutomationJob[]
-  tickets         SupportTicket[]
-  workflows       Workflow[]
-  customFields    CustomField[]
-  reports         Report[]
-  integrations    Integration[]
-  shifts          Shift[]
-  leavePolicies   LeavePolicy[]
+  panNumber          String?
+  gstNumber          String?
+  isActive           Boolean             @default(true)
+  onboardingDate     DateTime?
+  settings           Json?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  employees        Employee[]
+  users            User[]
+  locations        Location[]
+  departments      Department[]
+  designations     Designation[]
+  roles            Role[]
+  configs          Configuration[]
+  automations      AutomationJob[]
+  tickets          SupportTicket[]
+  workflows        Workflow[]
+  customFields     CustomField[]
+  reports          Report[]
+  integrations     Integration[]
+  shifts           Shift[]
+  leavePolicies    LeavePolicy[]
   payrollCalendars PayrollCalendar[]
-  policies        Policy[]
-  holidays        Holiday[]
-  subscription    Subscription?
-  customPricing   CustomPlanPricing[]
-  
+  policies         Policy[]
+  holidays         Holiday[]
+  subscription     Subscription?
+  customPricing    CustomPlanPricing[]
+
   @@unique([domain])
   @@index([isActive])
   @@map("companies")
@@ -807,24 +826,24 @@ model Company {
 
 // Company Locations/Branches
 model Location {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String   @db.ObjectId
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name        String
-  code        String?
-  address     String?
-  city        String?
+  id           String     @id @default(cuid())
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name         String
+  code         String?
+  address      String?
+  city         String?
   state        String?
-  zipCode     String?
-  country     String?
-  phone       String?
-  email       String?
-  isHeadOffice Boolean @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  employees   Employee[]
-  
+  zipCode      String?
+  country      String?
+  phone        String?
+  email        String?
+  isHeadOffice Boolean    @default(false)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  employees    Employee[]
+
   @@unique([companyId, code])
   @@index([companyId])
   @@map("locations")
@@ -832,21 +851,21 @@ model Location {
 
 // Departments
 model Department {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String   @db.ObjectId
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id          String       @id @default(cuid())
+  companyId   String
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name        String
   code        String?
   description String?
-  parentId    String?  @db.ObjectId
-  parent      Department? @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentId    String?
+  parent      Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
   children    Department[] @relation("DepartmentHierarchy")
-  headId      String?  @db.ObjectId
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  headId      String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   employees   Employee[]
-  
+
   @@unique([companyId, code])
   @@index([companyId])
   @@index([parentId])
@@ -855,18 +874,18 @@ model Department {
 
 // Designations
 model Designation {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String   @db.ObjectId
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id          String     @id @default(cuid())
+  companyId   String
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name        String
   code        String?
-  level       Int?     // Hierarchy level
+  level       Int?
   description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   employees   Employee[]
-  
+
   @@unique([companyId, code])
   @@index([companyId])
   @@map("designations")
@@ -874,17 +893,17 @@ model Designation {
 
 // Flexible Configuration System
 model Configuration {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
+  id          String   @id @default(cuid())
+  companyId   String?
   company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   key         String
-  value       Json     // Flexible JSON value
-  category    String   // PAYROLL, LEAVE, ATTENDANCE, GENERAL, etc.
+  value       Json
+  category    String
   description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@unique([companyId, key])
   @@index([companyId, category])
   @@map("configurations")
@@ -892,99 +911,98 @@ model Configuration {
 
 // Automation/Jobs System (Autobots)
 model AutomationJob {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name        String
-  type        String   // AUTO_PAYROLL, AUTO_ATTENDANCE, AUTO_REMINDER, etc.
-  schedule    String   // Cron expression or schedule pattern
-  config      Json     // Job-specific configuration
-  isActive    Boolean  @default(true)
-  lastRun     DateTime?
-  nextRun     DateTime?
-  runCount    Int      @default(0)
-  status      String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
-  error       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String    @id @default(cuid())
+  companyId String?
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  type      String
+  schedule  String
+  config    Json
+  isActive  Boolean   @default(true)
+  lastRun   DateTime?
+  nextRun   DateTime?
+  runCount  Int       @default(0)
+  status    String    @default("PENDING")
+  error     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
   @@index([companyId, type, isActive])
   @@map("automation_jobs")
 }
 
 // Support Ticket System
 model SupportTicket {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
+  id          String        @id @default(cuid())
+  companyId   String?
+  company     Company?      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
   title       String
   description String
-  category    String   // TECHNICAL, BILLING, FEATURE_REQUEST, BUG, etc.
-  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
-  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
-  assignedTo  String?  @db.ObjectId
+  category    String
+  priority    String        @default("MEDIUM")
+  status      String        @default("OPEN")
+  assignedTo  String?
   resolution  String?
-  attachments Json?    // Array of file URLs
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  resolvedAt DateTime?
-  
+  attachments Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  resolvedAt  DateTime?
   replies     TicketReply[]
-  
+
   @@index([companyId, status])
   @@index([userId])
   @@map("support_tickets")
 }
 
 model TicketReply {
-  id        String        @id @default(auto()) @map("_id") @db.ObjectId
-  ticketId  String        @db.ObjectId
-  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId    String        @db.ObjectId
-  user      User          @relation(fields: [userId], references: [id])
-  message   String
-  isInternal Boolean      @default(false) // Internal notes vs customer-visible
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  message     String
+  isInternal  Boolean       @default(false)
   attachments Json?
-  createdAt DateTime      @default(now())
-  
+  createdAt   DateTime      @default(now())
+
   @@index([ticketId])
   @@map("ticket_replies")
 }
 
 // Workflow System for Custom Processes
 model Workflow {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name        String
-  type        String   // LEAVE_APPROVAL, PAYROLL_PROCESSING, ONBOARDING, etc.
-  steps       Json     // Workflow steps configuration
-  triggers    Json?    // Event triggers
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String   @id @default(cuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  type      String
+  steps     Json
+  triggers  Json?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([companyId, type])
   @@map("workflows")
 }
 
 // Custom Fields for Flexibility
 model CustomField {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  entityType String   // EMPLOYEE, LEAVE, PAYROLL, etc.
-  fieldName   String
-  fieldType   String   // TEXT, NUMBER, DATE, SELECT, BOOLEAN, etc.
-  options     Json?    // For SELECT type
-  isRequired  Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id         String   @id @default(cuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  entityType String
+  fieldName  String
+  fieldType  String
+  options    Json?
+  isRequired Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@unique([companyId, entityType, fieldName])
   @@index([companyId, entityType])
   @@map("custom_fields")
@@ -992,36 +1010,36 @@ model CustomField {
 
 // Saved Reports
 model Report {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name        String
-  type        String   // EMPLOYEE, ATTENDANCE, LEAVE, PAYROLL, etc.
-  filters     Json     // Report filters
-  columns     Json     // Selected columns
-  schedule    String?  // Optional schedule for auto-generation
-  createdBy   String   @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String   @id @default(cuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  type      String
+  filters   Json
+  columns   Json
+  schedule  String?
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([companyId, type])
   @@map("reports")
 }
 
 // Audit Logs for Compliance
 model AuditLog {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  userId      String?  @db.ObjectId
-  user        User?    @relation(fields: [userId], references: [id])
-  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
-  entityType  String   // EMPLOYEE, LEAVE, PAYROLL, etc.
-  entityId    String?
-  changes     Json?    // Before/after changes
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  companyId  String?
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  changes    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
   @@index([companyId, entityType, entityId])
   @@index([userId])
   @@index([createdAt])
@@ -1030,20 +1048,20 @@ model AuditLog {
 
 // Activity Logs - Comprehensive tracking of all user actions
 model ActivityLog {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @db.ObjectId
+  id          String   @id @default(cuid())
+  userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyId   String?  @db.ObjectId
-  action      String   // LOGIN, LOGOUT, GENERATE_DOCUMENT, VIEW_DASHBOARD, etc.
-  entityType  String?  // DOCUMENT, EMPLOYEE, LEAVE, etc.
+  companyId   String?
+  action      String
+  entityType  String?
   entityId    String?
   description String
-  metadata    Json?    // Additional context data
+  metadata    Json?
   ipAddress   String?
   userAgent   String?
-  sessionId  String?
+  sessionId   String?
   createdAt   DateTime @default(now())
-  
+
   @@index([userId])
   @@index([companyId])
   @@index([action])
@@ -1054,33 +1072,33 @@ model ActivityLog {
 
 // Enhanced Notification System
 model NotificationPreference {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @unique @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  email       Boolean  @default(true)
-  sms         Boolean  @default(false)
-  push        Boolean  @default(true)
-  inApp       Boolean  @default(true)
-  categories  Json     // Notification category preferences
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email      Boolean  @default(true)
+  sms        Boolean  @default(false)
+  push       Boolean  @default(true)
+  inApp      Boolean  @default(true)
+  categories Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@map("notification_preferences")
 }
 
 // Integration with Third-party Services
 model Integration {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name        String   // SLACK, EMAIL, SMS, ACCOUNTING_SOFTWARE, etc.
-  type        String
-  config      Json     // API keys, webhooks, etc.
-  isActive    Boolean  @default(true)
-  lastSync    DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String    @id @default(cuid())
+  companyId String?
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  type      String
+  config    Json
+  isActive  Boolean   @default(true)
+  lastSync  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
   @@index([companyId, type])
   @@map("integrations")
 }
@@ -1088,24 +1106,24 @@ model Integration {
 // ========== SETTINGS & POLICY ENGINE MODULE ==========
 
 model Policy {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId     String   @db.ObjectId
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name          String
-  category      String   // ATTENDANCE, LEAVE, PAYROLL, RECRUITMENT, PERFORMANCE, GENERAL
-  policyType    String   // RULE, CONFIG, FEATURE_TOGGLE
-  version       Int      @default(1)
-  effectiveFrom DateTime
-  effectiveTo   DateTime?
-  isActive      Boolean  @default(true)
-  isImmutable   Boolean  @default(false) // Once active, cannot be modified
-  config        Json     // Policy configuration/rules
-  description   String?
-  createdBy     String   @db.ObjectId
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  previousVersion String? @db.ObjectId // Reference to previous version
-  
+  id              String    @id @default(cuid())
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name            String
+  category        String
+  policyType      String
+  version         Int       @default(1)
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  isActive        Boolean   @default(true)
+  isImmutable     Boolean   @default(false)
+  config          Json
+  description     String?
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  previousVersion String?
+
   @@unique([companyId, name, version])
   @@index([companyId, category])
   @@index([effectiveFrom, effectiveTo])
@@ -1114,15 +1132,15 @@ model Policy {
 
 // Feature Toggles
 model FeatureToggle {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  companyId   String?  @db.ObjectId
+  id          String   @id @default(cuid())
+  companyId   String?
   key         String
   value       Boolean  @default(false)
   description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@unique([companyId, key])
   @@index([companyId])
   @@map("feature_toggles")
@@ -1159,43 +1177,43 @@ enum AddOnType {
 
 // Pricing Plans
 model Plan {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  type              PlanType @unique
-  name              String
-  description       String?
-  pricePerEmployee  Float    // Price per employee per month
-  minEmployees      Int      @default(1)
-  maxEmployees      Int?
-  setupFee          Float    @default(0) // One-time setup fee
-  isActive          Boolean  @default(true)
-  isPopular         Boolean  @default(false)
-  features          String[] // List of module/feature names included
-  modules           Json?     // Detailed module configuration
-  displayOrder      Int      @default(0)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  subscriptions     Subscription[]
-  customPricing      CustomPlanPricing[]
-  
+  id               String   @id @default(cuid())
+  type             PlanType @unique
+  name             String
+  description      String?
+  pricePerEmployee Float
+  minEmployees     Int      @default(1)
+  maxEmployees     Int?
+  setupFee         Float    @default(0)
+  isActive         Boolean  @default(true)
+  isPopular        Boolean  @default(false)
+  features         String[]
+  modules          Json?
+  displayOrder     Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  subscriptions Subscription[]
+  customPricing CustomPlanPricing[]
+
   @@index([isActive])
   @@map("plans")
 }
 
 // Custom pricing overrides for Enterprise (per company)
 model CustomPlanPricing {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  planId        String   @db.ObjectId
-  plan          Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
-  companyId     String   @db.ObjectId
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  customPrice   Float    // Override price per employee
-  customSetupFee Float?  // Override setup fee
-  notes         String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id             String   @id @default(cuid())
+  planId         String
+  plan           Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customPrice    Float
+  customSetupFee Float?
+  notes          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
   @@unique([planId, companyId])
   @@index([companyId])
   @@index([planId])
@@ -1204,54 +1222,53 @@ model CustomPlanPricing {
 
 // Add-Ons
 model AddOn {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  type            AddOnType @unique
-  name            String
-  description     String?
-  price           Float     // Monthly price (or per unit for usage-based)
-  priceType       String    @default("MONTHLY") // MONTHLY, PER_UNIT, ONE_TIME
-  unit            String?   // e.g., "per message" for WhatsApp
-  isActive        Boolean   @default(true)
-  displayOrder    Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  subscriptions   SubscriptionAddOn[]
-  
+  id           String    @id @default(cuid())
+  type         AddOnType @unique
+  name         String
+  description  String?
+  price        Float
+  priceType    String    @default("MONTHLY")
+  unit         String?
+  isActive     Boolean   @default(true)
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  subscriptions SubscriptionAddOn[]
+
   @@index([isActive])
   @@map("add_ons")
 }
 
 // Company Subscriptions
 model Subscription {
-  id                String            @id @default(auto()) @map("_id") @db.ObjectId
-  companyId         String            @unique @db.ObjectId
-  company           Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  planId            String            @db.ObjectId
-  plan              Plan              @relation(fields: [planId], references: [id])
-  status            SubscriptionStatus @default(ACTIVE)
-  billingPeriod     BillingPeriod     @default(MONTHLY)
-  employeeCount     Int               @default(0)
-  basePrice         Float             // Price per employee
-  addOnsTotal       Float             @default(0)
-  setupFee          Float             @default(0)
-  subtotal          Float             // Before discount
-  discount          Float             @default(0) // Yearly discount
-  total             Float             // Final price
-  gst               Float?            // Future use
-  startDate         DateTime          @default(now())
-  endDate           DateTime?
-  nextBillingDate    DateTime?
-  trialEndDate      DateTime?
-  isSetupFeePaid    Boolean           @default(false)
-  notes             String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  
-  addOns            SubscriptionAddOn[]
-  invoices          Invoice[]
-  
-  // Note: companyId already has @unique which creates an index
+  id              String             @id @default(cuid())
+  companyId       String             @unique
+  company         Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  planId          String
+  plan            Plan               @relation(fields: [planId], references: [id])
+  status          SubscriptionStatus @default(ACTIVE)
+  billingPeriod   BillingPeriod      @default(MONTHLY)
+  employeeCount   Int                @default(0)
+  basePrice       Float
+  addOnsTotal     Float              @default(0)
+  setupFee        Float              @default(0)
+  subtotal        Float
+  discount        Float              @default(0)
+  total           Float
+  gst             Float?
+  startDate       DateTime           @default(now())
+  endDate         DateTime?
+  nextBillingDate DateTime?
+  trialEndDate    DateTime?
+  isSetupFeePaid  Boolean            @default(false)
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  addOns   SubscriptionAddOn[]
+  invoices Invoice[]
+
   @@index([status])
   @@index([planId])
   @@map("subscriptions")
@@ -1259,17 +1276,17 @@ model Subscription {
 
 // Subscription Add-Ons (Many-to-Many)
 model SubscriptionAddOn {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  subscriptionId  String       @db.ObjectId
-  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  addOnId         String       @db.ObjectId
-  addOn           AddOn        @relation(fields: [addOnId], references: [id])
-  quantity        Float?       @default(1) // For usage-based add-ons
-  price           Float        // Price at time of subscription
-  isActive        Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
+  id             String       @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  addOnId        String
+  addOn          AddOn        @relation(fields: [addOnId], references: [id])
+  quantity       Float?       @default(1)
+  price          Float
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
   @@unique([subscriptionId, addOnId])
   @@index([subscriptionId])
   @@index([addOnId])
@@ -1278,23 +1295,46 @@ model SubscriptionAddOn {
 
 // Invoices (for payment tracking)
 model Invoice {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  subscriptionId  String   @db.ObjectId
-  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  invoiceNumber   String   @unique
-  amount          Float
-  status          String   @default("PENDING") // PENDING, PAID, FAILED, CANCELLED
-  dueDate         DateTime
-  paidDate        DateTime?
-  paymentMethod   String?
-  transactionId   String?
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id             String       @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  invoiceNumber  String       @unique
+  amount         Float
+  status         String       @default("PENDING")
+  dueDate        DateTime
+  paidDate       DateTime?
+  paymentMethod  String?
+  transactionId  String?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
   @@index([subscriptionId])
   @@index([status])
-  // Note: invoiceNumber already has @unique which creates an index
   @@map("invoices")
 }
 
+// ========== TEMPLATE STUDIO ==========
+// Reusable document templates: built-in or uploaded by HR admins.
+model DocumentTemplate {
+  id           String   @id @default(cuid())
+  companyId    String?
+  name         String
+  type         String // OFFER_LETTER | APPOINTMENT_LETTER | WARNING_LETTER | etc | CUSTOM
+  source       String   @default("BUILT_IN") // BUILT_IN | UPLOADED | CUSTOM
+  description  String?
+  htmlBody     String // Editable HTML with {{merge.tags}}
+  thumbnail    String?
+  mergeTags    Json?
+  emailSubject String?
+  emailIntro   String?
+  isDefault    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdBy    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId, type])
+  @@index([companyId, isActive])
+  @@map("document_templates")
+}

@@ -1,0 +1,59 @@
+{
+  "name": "GrandHR — Modern HR Platform",
+  "short_name": "GrandHR",
+  "description": "Onboarding, attendance, payroll, document workflows and an employee portal — all connected.",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "theme_color": "#6366f1",
+  "background_color": "#0f172a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "human resources"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo.jpeg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Punch in",
+      "short_name": "Punch",
+      "description": "Clock in or out for the day",
+      "url": "/employee/attendance?action=punch",
+      "icons": [{ "src": "/icons/shortcut-punch.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Apply for leave",
+      "short_name": "Leave",
+      "description": "Submit a new leave request",
+      "url": "/employee/leaves?action=apply",
+      "icons": [{ "src": "/icons/shortcut-leave.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "My payslips",
+      "short_name": "Payslips",
+      "description": "View and download your payslips",
+      "url": "/employee/salary",
+      "icons": [{ "src": "/icons/shortcut-payslip.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

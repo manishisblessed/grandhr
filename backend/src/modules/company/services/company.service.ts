@@ -1,4 +1,4 @@
-import { PrismaClient, Company } from '@prisma/client';
+import { PrismaClient, Company, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -92,7 +92,9 @@ export class CompanyService {
   ): Promise<Company> {
     return prisma.company.update({
       where: { id: companyId },
-      data,
+      // Postgres + Prisma is strict about null vs JsonNull on JSON fields.
+      // Callers pass plain JS objects so the unchecked input is safe here.
+      data: data as Prisma.CompanyUncheckedUpdateInput,
     });
   }
 

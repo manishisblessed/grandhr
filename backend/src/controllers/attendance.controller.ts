@@ -256,6 +256,69 @@ export const getAttendanceByDate = async (req: AuthRequest, res: Response) => {
   }
 };
 
+/**
+ * POST /api/attendance/mark
+ * HR-only. Upserts an attendance record for an employee on a given date.
+ * Useful when an employee forgot to clock in or HR is back-filling a day.
+ */
+export const markAttendance = async (req: AuthRequest, res: Response) => {
+  try {
+    const { employeeId, date, status, clockIn, clockOut, notes, breakDuration = 0 } = req.body || {};
+
+    if (!employeeId || !date) {
+      return res.status(400).json({ message: 'employeeId and date are required' });
+    }
+
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+
+    const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    let totalHours: number | undefined;
+    if (clockIn && clockOut) {
+      totalHours = calculateHours(new Date(clockIn), new Date(clockOut), Number(breakDuration) || 0);
+    }
+
+    const attendance = await prisma.attendance.upsert({
+      where: { employeeId_date: { employeeId, date: target } },
+      create: {
+        employeeId,
+        date: target,
+        status: status || 'PRESENT',
+        clockIn: clockIn ? new Date(clockIn) : undefined,
+        clockOut: clockOut ? new Date(clockOut) : undefined,
+        breakDuration: Number(breakDuration) || 0,
+        totalHours,
+        notes,
+        approvedBy: req.userId,
+        approvedAt: new Date(),
+      },
+      update: {
+        status: status || undefined,
+        clockIn: clockIn ? new Date(clockIn) : undefined,
+        clockOut: clockOut ? new Date(clockOut) : undefined,
+        breakDuration: breakDuration !== undefined ? Number(breakDuration) : undefined,
+        totalHours,
+        notes,
+        approvedBy: req.userId,
+        approvedAt: new Date(),
+      },
+      include: {
+        employee: {
+          select: { id: true, firstName: true, lastName: true, employeeId: true },
+        },
+      },
+    });
+
+    res.json({ message: 'Attendance saved', attendance });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'Failed to mark attendance' });
+  }
+};
+
 export const updateAttendance = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;

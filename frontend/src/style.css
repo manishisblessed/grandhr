@@ -1,22 +1,84 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ========== shadcn-style HSL design tokens ========== */
 @layer base {
   :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Light mode palette */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 258 90% 66%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 243 75% 59%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 258 90% 66%;
+    --radius: 0.75rem;
+
+    /* Legacy gradients (kept for backwards compat) */
+    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --success-gradient: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
     --glass-bg: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
   }
 
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 258 90% 70%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 243 75% 65%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 258 90% 70%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
   body {
-    @apply font-sans antialiased bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 text-gray-900;
+    @apply font-sans antialiased text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: hsl(var(--background));
     min-height: 100vh;
+  }
+
+  /* Default light gradient on body when no shell is applied */
+  body:not(.dark):not(.shell-applied) {
+    background-image: linear-gradient(180deg, #f8fafc 0%, #eef2ff 50%, #f5f3ff 100%);
+  }
+
+  body.dark:not(.shell-applied) {
+    background-image: radial-gradient(at 20% 0%, hsl(258 90% 30% / 0.35) 0px, transparent 50%),
+                      radial-gradient(at 80% 0%, hsl(199 89% 30% / 0.25) 0px, transparent 50%),
+                      radial-gradient(at 50% 100%, hsl(280 87% 30% / 0.2) 0px, transparent 50%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -202,7 +264,7 @@
   }
 
   .form-input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors;
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors;
   }
 
   .btn-primary {
@@ -566,4 +628,124 @@ html {
 
 ::-webkit-scrollbar-thumb {
   @apply bg-gray-300 rounded-full hover:bg-gray-400;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background-color: hsl(var(--secondary));
+}
+.dark ::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted));
+}
+
+/* ========== New Design System v2 ========== */
+@layer components {
+  /* Surface — primary card surface in new design */
+  .surface {
+    @apply bg-card text-card-foreground border rounded-lg shadow-sm;
+  }
+  .surface-elevated {
+    @apply surface shadow-lg;
+  }
+
+  /* Glass v2 — works in both light and dark */
+  .glass {
+    background-color: hsl(var(--card) / 0.65);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+  .glass-strong {
+    background-color: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid hsl(var(--border) / 0.6);
+  }
+
+  /* Mesh gradient backgrounds */
+  .bg-mesh {
+    background-image:
+      radial-gradient(at 20% 0%, hsl(258 90% 66% / 0.18) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(199 89% 48% / 0.14) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(280 87% 65% / 0.14) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, hsl(330 81% 60% / 0.12) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsl(225 73% 57% / 0.14) 0px, transparent 50%);
+  }
+  .dark .bg-mesh {
+    background-image:
+      radial-gradient(at 20% 0%, hsl(258 90% 50% / 0.35) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(199 89% 40% / 0.22) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(280 87% 50% / 0.22) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, hsl(330 81% 50% / 0.16) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsl(225 73% 47% / 0.22) 0px, transparent 50%);
+  }
+
+  /* Aurora animated gradient */
+  .bg-aurora {
+    background:
+      radial-gradient(120% 80% at 20% 0%, hsl(258 90% 66% / 0.45) 0%, transparent 60%),
+      radial-gradient(120% 80% at 80% 100%, hsl(199 89% 48% / 0.4) 0%, transparent 60%),
+      radial-gradient(80% 80% at 50% 50%, hsl(280 87% 65% / 0.3) 0%, transparent 70%);
+    background-size: 200% 200%, 200% 200%, 200% 200%;
+    animation: aurora 18s ease infinite;
+  }
+
+  /* Grid backdrop */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+  }
+
+  /* Section padding helpers */
+  .section { @apply py-16 md:py-24; }
+  .section-tight { @apply py-10 md:py-14; }
+
+  /* Soft glow ring */
+  .ring-glow {
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.4), 0 0 30px hsl(var(--primary) / 0.35);
+  }
+
+  /* Gradient borders */
+  .gradient-border {
+    position: relative;
+    background-clip: padding-box;
+    border: 1px solid transparent;
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  /* Text gradient v2 — uses theme tokens */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  /* No-overflow shells */
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }

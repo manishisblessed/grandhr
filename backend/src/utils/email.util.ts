@@ -1,202 +1,189 @@
 import nodemailer from 'nodemailer';
+import {
+  RenderedEmail,
+  renderDocumentSentEmail,
+  renderEmailShell,
+  renderWelcomeEmail,
+  WelcomeData,
+} from './email-templates';
 
 /**
- * Email Utility - All confirmations and system emails sent from noreply@grandhr.in
- * Made by Shah Works - www.shahworks.com
+ * Email Utility — every transactional email leaves through here.
+ * Built on top of `email-templates/` for a single branded look.
+ *
+ * Made by Shah Works · www.shahworks.com
  */
 
 /** All transactional/confirmation emails use this sender. Set EMAIL_FROM in .env to override. */
 export const NOREPLY_FROM = process.env.EMAIL_FROM || 'noreply@grandhr.in';
+const FROM_HEADER = `GrandHR <${NOREPLY_FROM}>`;
 
-// Create reusable transporter
+export type EmailSendResult =
+  | { success: true; messageId: string }
+  | { success: false; error: string };
+
+const isSmtpConfigured = (): { ok: boolean; reason?: string } => {
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD;
+  if (!user?.trim() || !pass?.trim()) {
+    return {
+      ok: false,
+      reason:
+        'Email service is not configured on the server. Set SMTP_USER and SMTP_PASS (or EMAIL_USER and EMAIL_PASSWORD) in the backend environment.',
+    };
+  }
+  return { ok: true };
+};
+
+// Gmail App Passwords are often shown with spaces; strip them before passing
+// to nodemailer to avoid auth surprises.
 const createTransporter = () => {
-  const transporter = nodemailer.createTransport({
+  const rawPass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || '';
+  const cleanedPass = rawPass.replace(/\s+/g, '');
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: false,
     auth: {
       user: process.env.SMTP_USER || process.env.EMAIL_USER,
-      pass: process.env.SMTP_PASS || process.env.EMAIL_PASSWORD,
+      pass: cleanedPass,
     },
   });
-
-  return transporter;
 };
 
-/**
- * Send employee welcome email with credentials
- */
-export const sendEmployeeWelcomeEmail = async (
-  employeeEmail: string,
-  employeeName: string,
-  password: string,
-  employeeId: string
-) => {
+type CoreSendOptions = {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  attachments?: nodemailer.SendMailOptions['attachments'];
+  replyTo?: string;
+};
+
+const coreSend = async ({ to, subject, html, text, attachments, replyTo }: CoreSendOptions): Promise<EmailSendResult> => {
+  const cfg = isSmtpConfigured();
+  if (!cfg.ok) {
+    return { success: false, error: cfg.reason || 'Email not configured' };
+  }
   try {
     const transporter = createTransporter();
-    const mailOptions = {
-      from: `GrandHR <${NOREPLY_FROM}>`,
-      to: employeeEmail,
-      subject: 'Welcome to GrandHR - Your Account Credentials',
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-            .credential-item { margin: 10px 0; }
-            .label { font-weight: bold; color: #667eea; }
-            .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Welcome to GrandHR!</h1>
-            </div>
-            <div class="content">
-              <p>Dear ${employeeName},</p>
-              
-              <p>Welcome to GrandHR! Your account has been created successfully. You can now access the HR management system using the credentials below:</p>
-              
-              <div class="credentials">
-                <div class="credential-item">
-                  <span class="label">Email:</span> ${employeeEmail}
-                </div>
-                <div class="credential-item">
-                  <span class="label">Password:</span> ${password}
-                </div>
-                <div class="credential-item">
-                  <span class="label">Employee ID:</span> ${employeeId}
-                </div>
-              </div>
-              
-              <p><strong>Important:</strong> Please change your password after your first login for security purposes.</p>
-              
-              <div style="text-align: center;">
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/hr/login" class="button">Login to GrandHR</a>
-              </div>
-              
-              <p>If you have any questions or need assistance, please contact your HR department or support team.</p>
-              
-              <div class="footer">
-                <p>© ${new Date().getFullYear()} GrandHR. All rights reserved. | Shah Works</p>
-                <p>This is an automated email. Please do not reply.</p>
-              </div>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-      text: `
-Welcome to GrandHR!
-
-Dear ${employeeName},
-
-Your account has been created successfully. Here are your login credentials:
-
-Email: ${employeeEmail}
-Password: ${password}
-Employee ID: ${employeeId}
-
-Please login at: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/hr/login
-
-Important: Please change your password after your first login.
-
-If you have any questions, please contact your HR department.
-
-© ${new Date().getFullYear()} GrandHR. All rights reserved. | Shah Works
-      `,
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Employee welcome email sent:', info.messageId);
+    const info = await transporter.sendMail({
+      from: FROM_HEADER,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>/g, ''),
+      attachments: attachments && attachments.length ? attachments : undefined,
+      replyTo,
+    });
     return { success: true, messageId: info.messageId };
   } catch (error: any) {
-    console.error('Error sending employee welcome email:', error);
-    // Don't throw error - email failure shouldn't break employee creation
-    return { success: false, error: error.message };
+    console.error('[email.util] Failed to send email:', error?.message || error);
+    return { success: false, error: error?.message || 'Failed to send email' };
   }
 };
 
 /**
- * Send email notification (generic)
+ * Send a fully-rendered email (subject + html + text). Recommended for callers
+ * that have already produced a `RenderedEmail` from `email-templates`.
+ */
+export const sendRenderedEmail = async (
+  to: string,
+  rendered: RenderedEmail,
+  opts?: { attachments?: nodemailer.SendMailOptions['attachments']; replyTo?: string },
+): Promise<EmailSendResult> =>
+  coreSend({
+    to,
+    subject: rendered.subject,
+    html: rendered.html,
+    text: rendered.text,
+    attachments: opts?.attachments,
+    replyTo: opts?.replyTo,
+  });
+
+/**
+ * Generic email sender. If you pass plain HTML, it's wrapped in the branded
+ * shell automatically so older callers still get consistent styling.
+ *
+ * - If `subject` and `html` look like a complete document (start with <!DOCTYPE
+ *   or <html), they're sent as-is for back-compat.
+ * - Otherwise, the HTML is treated as a single message body and rendered
+ *   inside the shell with the subject as the heading.
  */
 export const sendEmail = async (
   to: string,
   subject: string,
   html: string,
-  text?: string
-) => {
-  try {
-    const transporter = createTransporter();
-    const mailOptions = {
-      from: `GrandHR <${NOREPLY_FROM}>`,
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ''),
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
-  } catch (error: any) {
-    console.error('Error sending email:', error);
-    return { success: false, error: error.message };
+  text?: string,
+): Promise<EmailSendResult> => {
+  const trimmed = (html || '').trim().toLowerCase();
+  const isFullDocument = trimmed.startsWith('<!doctype') || trimmed.startsWith('<html');
+  if (isFullDocument) {
+    return coreSend({ to, subject, html, text });
   }
+  // Wrap a snippet in the branded shell so any legacy caller still looks
+  // on-brand. Callers that already build a fully-styled doc skip this path.
+  const wrapped = renderEmailShell({
+    title: subject,
+    intro: html,
+    accent: 'primary',
+  });
+  return coreSend({ to, subject, html: wrapped.html, text: text || wrapped.text });
+};
+
+export const sendEmployeeWelcomeEmail = async (
+  employeeEmail: string,
+  employeeName: string,
+  password: string,
+  employeeId: string,
+  companyName?: string,
+): Promise<EmailSendResult> => {
+  const data: WelcomeData = { employeeEmail, employeeName, password, employeeId, companyName };
+  const rendered = renderWelcomeEmail(data);
+  return sendRenderedEmail(employeeEmail, rendered);
 };
 
 /**
- * Send a document (e.g. offer letter) to a candidate's email from noreply@grandhr.in
- * Optionally attach a PDF.
+ * Send a document (e.g. offer letter) to an employee. The provided HTML body
+ * is the document content itself; we wrap it in the branded shell. If the
+ * caller passes a fully-styled HTML document, it is sent unchanged.
  */
 export const sendDocumentEmail = async (
   to: string,
   subject: string,
   html: string,
   pdfBase64?: string,
-  attachmentFilename: string = 'document.pdf'
-) => {
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD;
-  if (!smtpUser?.trim() || !smtpPass?.trim()) {
-    return {
-      success: false,
-      error:
-        'Email service is not configured on the server. Set SMTP_USER and SMTP_PASS (or EMAIL_USER and EMAIL_PASSWORD) in the backend environment. The error "Missing credentials for PLAIN" means these variables are empty.',
-    };
-  }
-  try {
-    const transporter = createTransporter();
-    const attachments: nodemailer.SendMailOptions['attachments'] = [];
-    if (pdfBase64) {
-      attachments.push({
-        filename: attachmentFilename,
-        content: Buffer.from(pdfBase64, 'base64'),
-      });
-    }
+  attachmentFilename: string = 'document.pdf',
+): Promise<EmailSendResult> => {
+  const cfg = isSmtpConfigured();
+  if (!cfg.ok) return { success: false, error: cfg.reason! };
 
-    const mailOptions: nodemailer.SendMailOptions = {
-      from: `GrandHR <${NOREPLY_FROM}>`,
-      to,
-      subject,
-      html,
-      text: html.replace(/<[^>]*>/g, ''),
-      attachments: attachments.length ? attachments : undefined,
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Document email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
-  } catch (error: any) {
-    console.error('Error sending document email:', error);
-    return { success: false, error: error.message };
+  const attachments: nodemailer.SendMailOptions['attachments'] = [];
+  if (pdfBase64) {
+    attachments.push({
+      filename: attachmentFilename,
+      content: Buffer.from(pdfBase64, 'base64'),
+    });
   }
+
+  const trimmed = (html || '').trim().toLowerCase();
+  const isFullDocument = trimmed.startsWith('<!doctype') || trimmed.startsWith('<html');
+  if (isFullDocument) {
+    return coreSend({ to, subject, html, attachments });
+  }
+
+  const rendered = renderDocumentSentEmail({
+    employeeName: 'there',
+    documentName: subject,
+    documentBody: html,
+    hasAttachment: attachments.length > 0,
+    attachmentLabel: attachments.length > 0 ? attachmentFilename : undefined,
+  });
+  return coreSend({
+    to,
+    subject: rendered.subject,
+    html: rendered.html,
+    text: rendered.text,
+    attachments,
+  });
 };
-

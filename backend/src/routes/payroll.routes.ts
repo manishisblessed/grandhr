@@ -11,12 +11,12 @@ import { authenticate, authorize } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-router.post('/', authenticate, authorize('ADMIN', 'HR'), createPayroll);
-router.post('/generate', authenticate, authorize('ADMIN', 'HR'), generatePayroll);
-router.get('/', authenticate, authorize('ADMIN', 'HR'), getPayrolls);
+router.post('/', authenticate, authorize('SUPER_ADMIN', 'COMPANY_ADMIN', 'HR'), createPayroll);
+router.post('/generate', authenticate, authorize('SUPER_ADMIN', 'COMPANY_ADMIN', 'HR'), generatePayroll);
+router.get('/', authenticate, authorize('SUPER_ADMIN', 'COMPANY_ADMIN', 'HR'), getPayrolls);
 router.get('/my-payrolls', authenticate, getMyPayrolls);
 router.get('/:id', authenticate, getPayrollById);
-router.put('/:id', authenticate, authorize('ADMIN', 'HR'), updatePayroll);
+router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'COMPANY_ADMIN', 'HR'), updatePayroll);
 
 export default router;
 

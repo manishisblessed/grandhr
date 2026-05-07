@@ -44,10 +44,14 @@ export class SchedulerService {
     try {
       // Check database connection first
       try {
-        // Check if DATABASE_URL is properly configured
-        if (!process.env.DATABASE_URL || 
-            (!process.env.DATABASE_URL.startsWith('mongodb://') && 
-             !process.env.DATABASE_URL.startsWith('mongodb+srv://'))) {
+        // Sanity-check that DATABASE_URL is set and looks like a supported provider.
+        const url = process.env.DATABASE_URL || '';
+        const isSupported =
+          url.startsWith('postgresql://') ||
+          url.startsWith('postgres://') ||
+          url.startsWith('mongodb://') ||
+          url.startsWith('mongodb+srv://');
+        if (!isSupported) {
           console.warn('⚠️  DATABASE_URL not configured properly, skipping scheduler check');
           return;
         }
