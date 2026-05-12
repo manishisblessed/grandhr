@@ -28,6 +28,8 @@ import {
 } from '../../utils/password';
 import { useAppLock } from '../../services/appLock';
 import { useToast } from '../../components/common/Toast';
+import { useTheme, AppearanceMode } from '../../theme/ThemeProvider';
+import { Haptic } from '../../utils/haptics';
 
 export default function SettingsScreen() {
   const navigation = useNavigation<any>();
@@ -40,6 +42,14 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(false);
   const [pwErrors, setPwErrors] = useState<Record<string, string>>({});
   const appLock = useAppLock();
+  const theme = useTheme();
+
+  const setAppearance = async (next: AppearanceMode) => {
+    if (next === theme.mode) return;
+    Haptic.selection();
+    await theme.setMode(next);
+    toast.success(`Appearance set to ${next}`);
+  };
 
   const validatePw = () => {
     const e: Record<string, string> = {};
@@ -175,6 +185,46 @@ export default function SettingsScreen() {
             />
           </View>
         )}
+      </Card>
+
+      <Card style={styles.section}>
+        <Text style={styles.sectionTitle}>Appearance</Text>
+        <Text style={styles.sectionHint}>
+          Choose how GrandHR looks. System follows your device theme.
+        </Text>
+        <View style={styles.segment}>
+          {(
+            [
+              { id: 'system' as AppearanceMode, label: 'System', icon: 'phone-portrait-outline' as const },
+              { id: 'light' as AppearanceMode, label: 'Light', icon: 'sunny-outline' as const },
+              { id: 'dark' as AppearanceMode, label: 'Dark', icon: 'moon-outline' as const },
+            ]
+          ).map((opt) => {
+            const active = theme.mode === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+                onPress={() => setAppearance(opt.id)}
+                activeOpacity={0.85}
+              >
+                <Ionicons
+                  name={opt.icon}
+                  size={16}
+                  color={active ? Colors.primary : Colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.segmentText,
+                    active && styles.segmentTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </Card>
 
       <Card style={styles.section}>
@@ -322,6 +372,41 @@ const styles = StyleSheet.create({
   },
   dangerSection: { borderWidth: 1, borderColor: Colors.errorLight },
   dangerTitle: { color: Colors.error, borderBottomColor: Colors.errorLight },
+  sectionHint: {
+    fontSize: FontSize.xs,
+    color: Colors.textTertiary,
+    marginBottom: Spacing.md,
+  },
+  segment: {
+    flexDirection: 'row',
+    backgroundColor: Colors.backgroundAlt,
+    borderRadius: BorderRadius.md,
+    padding: 4,
+    gap: 4,
+  },
+  segmentBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+  },
+  segmentBtnActive: {
+    backgroundColor: Colors.surface,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
+  segmentText: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  segmentTextActive: { color: Colors.primary },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',

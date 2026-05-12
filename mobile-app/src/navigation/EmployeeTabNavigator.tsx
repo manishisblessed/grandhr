@@ -9,6 +9,7 @@ import LeaveStatusScreen from '../screens/employee/LeaveStatusScreen';
 import SalarySlipScreen from '../screens/employee/SalarySlipScreen';
 import ProfileScreen from '../screens/employee/ProfileScreen';
 import DocumentsScreen from '../screens/employee/DocumentsScreen';
+import EmployeeIdCardScreen from '../screens/employee/EmployeeIdCardScreen';
 import NotificationsScreen from '../screens/common/NotificationsScreen';
 import SupportScreen from '../screens/common/SupportScreen';
 import ChatbotScreen from '../screens/common/ChatbotScreen';
@@ -41,6 +42,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="LeaveStatus" component={LeaveStatusScreen} options={{ title: 'Leave Status' }} />
       <HomeStack.Screen name="SalarySlip" component={SalarySlipScreen} options={{ title: 'Salary Slips' }} />
       <HomeStack.Screen name="Documents" component={DocumentsScreen} options={{ title: 'My Documents' }} />
+      <HomeStack.Screen name="IdCard" component={EmployeeIdCardScreen} options={{ title: 'My ID Card' }} />
       <HomeStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
       <HomeStack.Screen name="Support" component={SupportScreen} options={{ title: 'Support' }} />
       <HomeStack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'HR Assistant' }} />
@@ -63,6 +65,7 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="SettingsMain" component={SettingsScreen} options={{ title: 'Settings' }} />
       <MoreStack.Screen name="Support" component={SupportScreen} options={{ title: 'Support' }} />
       <MoreStack.Screen name="Documents" component={DocumentsScreen} options={{ title: 'My Documents' }} />
+      <MoreStack.Screen name="IdCard" component={EmployeeIdCardScreen} options={{ title: 'My ID Card' }} />
       <MoreStack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'HR Assistant' }} />
       <MoreStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
       <MoreStack.Screen name="Terms" component={TermsScreen} options={{ title: 'Terms of Service' }} />

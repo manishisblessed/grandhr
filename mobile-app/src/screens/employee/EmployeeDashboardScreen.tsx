@@ -5,21 +5,36 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
-import { useToast } from '../../components/common/Toast';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useToast } from '../../components/common/Toast';
 import StatCard from '../../components/dashboard/StatCard';
 import QuickAction from '../../components/dashboard/QuickAction';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Button from '../../components/common/Button';
+import Skeleton from '../../components/common/Skeleton';
+import Sparkline from '../../components/charts/Sparkline';
 import { useAuthStore } from '../../store/useAuthStore';
 import { DashboardService } from '../../services/dashboard.service';
 import { AttendanceService } from '../../services/attendance.service';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import {
+  Colors,
+  FontSize,
+  Spacing,
+  BorderRadius,
+  Gradients,
+} from '../../constants/theme';
 import { LEAVE_STATUS_COLORS } from '../../constants/config';
-import { getGreeting, formatDate, formatTime, formatCurrency, getRoleLabel } from '../../utils/formatters';
+import {
+  getGreeting,
+  formatDate,
+  formatTime,
+  getRoleLabel,
+} from '../../utils/formatters';
 import { DashboardStats, Attendance } from '../../types';
 
 export default function EmployeeDashboardScreen() {
@@ -27,7 +42,9 @@ export default function EmployeeDashboardScreen() {
   const toast = useToast();
   const { user } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
+  const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [clockingIn, setClockingIn] = useState(false);
@@ -59,6 +76,7 @@ export default function EmployeeDashboardScreen() {
   }, [fetchData]);
 
   const handleClockAction = async () => {
+    if (clockingIn) return;
     setClockingIn(true);
     try {
       if (!todayAttendance?.clockIn) {
@@ -82,7 +100,15 @@ export default function EmployeeDashboardScreen() {
     fetchData();
   };
 
-  if (loading) return <LoadingSpinner message="Loading dashboard..." />;
+  const firstName = user?.employee?.firstName || user?.name || 'there';
+  const empId = user?.employee?.employeeId || '—';
+  const leaveBalance =
+    stats?.leaveBalance?.reduce((sum, b) => sum + b.balance, 0) ?? 0;
+  const presentDays =
+    stats?.recentAttendance?.filter((a) => a.status === 'PRESENT').length ?? 0;
+  const totalRecent = stats?.recentAttendance?.length ?? 0;
+  const presentPct = totalRecent > 0 ? (presentDays / totalRecent) * 100 : 0;
+  const leavePct = Math.min(100, (leaveBalance / 24) * 100);
 
   const clockLabel = !todayAttendance?.clockIn
     ? 'Clock In'
@@ -90,29 +116,82 @@ export default function EmployeeDashboardScreen() {
       ? 'Clock Out'
       : 'Completed';
 
+  const clockColor = !todayAttendance?.clockIn
+    ? Colors.warning
+    : !todayAttendance?.clockOut
+      ? Colors.success
+      : Colors.info;
+
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={Colors.primary}
+        />
       }
     >
-      <View style={styles.greetingSection}>
-        <View>
-          <Text style={styles.greeting}>{getGreeting()}</Text>
-          <Text style={styles.userName}>
-            {user?.employee?.firstName || user?.name || 'Employee'}
-          </Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{getRoleLabel(user?.role || 'EMPLOYEE')} Dashboard</Text>
-          </View>
-        </View>
-        <View style={styles.avatarWrap}>
-          <Ionicons name="person" size={24} color={Colors.primary} />
-        </View>
-      </View>
+      {/* Hero */}
+      <LinearGradient
+        colors={Gradients.hero}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <Badge
+          label={`Hi ${firstName}!`}
+          variant="gradient"
+          gradient="brand"
+          size="sm"
+          icon={
+            <Ionicons name="sparkles" size={12} color="#fff" />
+          }
+          style={{ marginBottom: Spacing.md }}
+        />
+        <Text style={styles.heroTitle}>Welcome to your workplace</Text>
+        <Text style={styles.heroSubtitle}>
+          Employee ID{' '}
+          <Text style={styles.heroId}>{empId}</Text>
+          {'  '}— {getGreeting()}. Punch in for the day, view documents, or apply for leave.
+        </Text>
 
+        <View style={styles.heroActions}>
+          <Button
+            title={clockLabel === 'Completed' ? 'Done for today' : clockLabel}
+            variant="gradient"
+            gradient="brand"
+            icon={
+              <Ionicons
+                name={
+                  !todayAttendance?.clockIn
+                    ? 'log-in-outline'
+                    : !todayAttendance?.clockOut
+                      ? 'log-out-outline'
+                      : 'checkmark-circle-outline'
+                }
+                size={16}
+                color="#fff"
+              />
+            }
+            onPress={handleClockAction}
+            loading={clockingIn}
+            disabled={clockLabel === 'Completed'}
+          />
+          <Button
+            title="Apply leave"
+            variant="outline"
+            icon={
+              <Ionicons name="airplane-outline" size={16} color={Colors.text} />
+            }
+            onPress={() => navigation.navigate('LeaveApply')}
+          />
+        </View>
+      </LinearGradient>
+
+      {/* Today's attendance card */}
       <Card style={styles.clockCard} variant="elevated">
         <View style={styles.clockRow}>
           <View>
@@ -121,16 +200,7 @@ export default function EmployeeDashboardScreen() {
               {formatDate(new Date().toISOString())}
             </Text>
           </View>
-          <Badge
-            label={clockLabel}
-            color={
-              !todayAttendance?.clockIn
-                ? Colors.warning
-                : !todayAttendance?.clockOut
-                  ? Colors.success
-                  : Colors.info
-            }
-          />
+          <Badge label={clockLabel} color={clockColor} />
         </View>
         <View style={styles.clockTimes}>
           <View style={styles.clockTimeItem}>
@@ -151,63 +221,161 @@ export default function EmployeeDashboardScreen() {
             </Text>
           </View>
         </View>
-        {(!todayAttendance?.clockIn || !todayAttendance?.clockOut) && (
-          <View style={styles.clockBtnWrap}>
-            <QuickAction
-              title={!todayAttendance?.clockIn ? 'Clock In' : 'Clock Out'}
-              icon={
-                !todayAttendance?.clockIn ? 'log-in-outline' : 'log-out-outline'
-              }
-              color={!todayAttendance?.clockIn ? Colors.success : Colors.error}
-              onPress={handleClockAction}
-            />
-          </View>
-        )}
       </Card>
 
+      {/* Quick stats */}
       <View style={styles.statsRow}>
-        <StatCard
-          title="Leave Balance"
-          value={
-            stats?.leaveBalance?.reduce((sum, b) => sum + b.balance, 0) ?? 0
-          }
-          icon="calendar-outline"
-          color={Colors.info}
+        {loading ? (
+          <>
+            <Skeleton height={120} radius={BorderRadius.lg} style={{ flex: 1 }} />
+            <Skeleton height={120} radius={BorderRadius.lg} style={{ flex: 1 }} />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Present days"
+              value={`${presentDays}${totalRecent ? ` / ${totalRecent}` : ''}`}
+              subtitle="this period"
+              icon="checkmark-circle-outline"
+              gradient="emeraldTeal"
+              progress={presentPct}
+            />
+            <StatCard
+              title="Leave balance"
+              value={leaveBalance}
+              subtitle="days remaining"
+              icon="airplane-outline"
+              gradient="amberOrange"
+              progress={leavePct}
+            />
+          </>
+        )}
+      </View>
+
+      {/* Quick links */}
+      <Text style={styles.sectionTitle}>Quick actions</Text>
+      <View style={styles.quickGrid}>
+        <QuickAction
+          title="Apply Leave"
+          icon="add-circle-outline"
+          gradient="violetIndigo"
+          onPress={() => navigation.navigate('LeaveApply')}
         />
-        <StatCard
-          title="Present Days"
-          value={stats?.recentAttendance?.filter((a) => a.status === 'PRESENT').length ?? 0}
-          icon="checkmark-circle-outline"
-          color={Colors.success}
+        <QuickAction
+          title="My Leaves"
+          icon="list-outline"
+          gradient="pinkRose"
+          onPress={() => navigation.navigate('LeaveStatus')}
+        />
+        <QuickAction
+          title="Attendance"
+          icon="time-outline"
+          gradient="emeraldTeal"
+          onPress={() => navigation.navigate('Attendance')}
+        />
+        <QuickAction
+          title="Salary Slips"
+          icon="wallet-outline"
+          gradient="amberOrange"
+          onPress={() => navigation.navigate('SalarySlip')}
+        />
+      </View>
+      <View style={styles.quickGrid}>
+        <QuickAction
+          title="ID Card"
+          icon="card-outline"
+          gradient="brand"
+          onPress={() => navigation.navigate('IdCard')}
+        />
+        <QuickAction
+          title="Documents"
+          icon="document-text-outline"
+          gradient="cyanSky"
+          onPress={() => navigation.navigate('Documents')}
+        />
+        <QuickAction
+          title="HR Bot"
+          icon="chatbubble-ellipses-outline"
+          gradient="violetIndigoSoft"
+          onPress={() => navigation.navigate('Chatbot')}
+        />
+        <QuickAction
+          title="Support"
+          icon="headset-outline"
+          gradient="redOrange"
+          onPress={() => navigation.navigate('Support')}
         />
       </View>
 
-      <Text style={styles.sectionTitle}>Quick Actions</Text>
-      <Card>
-        <View style={styles.actionsGrid}>
-          <QuickAction title="Apply Leave" icon="add-circle-outline" color={Colors.primary} onPress={() => navigation.navigate('LeaveApply')} />
-          <QuickAction title="Leave Status" icon="list-outline" color={Colors.secondary} onPress={() => navigation.navigate('LeaveStatus')} />
-          <QuickAction title="Attendance" icon="time-outline" color={Colors.success} onPress={() => navigation.navigate('Attendance')} />
-          <QuickAction title="Salary Slips" icon="wallet-outline" color={Colors.warning} onPress={() => navigation.navigate('SalarySlip')} />
-        </View>
-        <View style={styles.actionsGrid}>
-          <QuickAction title="Documents" icon="document-outline" color={Colors.info} onPress={() => navigation.navigate('Documents')} />
-          <QuickAction title="Support" icon="chatbubbles-outline" color="#E11D48" onPress={() => navigation.navigate('Support')} />
-          <QuickAction title="HR Bot" icon="chatbubble-ellipses-outline" color="#8B5CF6" onPress={() => navigation.navigate('Chatbot')} />
-          <QuickAction title="Notifications" icon="notifications-outline" color="#F59E0B" onPress={() => navigation.navigate('Notifications')} />
-        </View>
-      </Card>
+      {/* Attendance trend sparkline */}
+      {stats?.recentAttendance && stats.recentAttendance.length > 1 && (
+        <Card>
+          <View style={styles.sectionRow}>
+            <View>
+              <Text style={styles.sectionTitle}>Your activity</Text>
+              <Text style={{ fontSize: 11, color: Colors.textSecondary }}>
+                Hours logged in recent attendance
+              </Text>
+            </View>
+            <Badge
+              label={`${presentDays}/${totalRecent} days`}
+              color={Colors.success}
+              size="sm"
+            />
+          </View>
+          <View style={{ marginTop: Spacing.md, alignItems: 'center' }}>
+            <Sparkline
+              data={stats.recentAttendance
+                .slice(0, 14)
+                .reverse()
+                .map((a) => a.totalHours || 0)}
+              width={300}
+              height={64}
+              stroke={Colors.primary}
+            />
+          </View>
+        </Card>
+      )}
 
+      {/* Upcoming leaves */}
       {stats?.upcomingLeaves && stats.upcomingLeaves.length > 0 && (
         <>
-          <Text style={styles.sectionTitle}>Upcoming Leaves</Text>
-          {stats.upcomingLeaves.slice(0, 3).map((leave) => (
-            <Card key={leave.id} style={styles.leaveItem}>
-              <View style={styles.leaveRow}>
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>Upcoming leaves</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('LeaveStatus')}>
+              <Text style={styles.viewAll}>View all</Text>
+            </TouchableOpacity>
+          </View>
+          <Card padding="none" style={{ overflow: 'hidden' }}>
+            {stats.upcomingLeaves.slice(0, 3).map((leave, idx) => (
+              <View
+                key={leave.id}
+                style={[
+                  styles.leaveRow,
+                  idx > 0 && {
+                    borderTopWidth: 1,
+                    borderTopColor: Colors.borderLight,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.leaveIcon,
+                    { backgroundColor: Colors.primary + '15' },
+                  ]}
+                >
+                  <Ionicons
+                    name="airplane-outline"
+                    size={18}
+                    color={Colors.primary}
+                  />
+                </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.leaveType}>{leave.type}</Text>
+                  <Text style={styles.leaveType}>
+                    {leave.type.replace(/_/g, ' ').toLowerCase()}
+                  </Text>
                   <Text style={styles.leaveDates}>
-                    {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
+                    {formatDate(leave.startDate)} – {formatDate(leave.endDate)}
                   </Text>
                 </View>
                 <Badge
@@ -216,43 +384,48 @@ export default function EmployeeDashboardScreen() {
                   size="sm"
                 />
               </View>
-            </Card>
-          ))}
+            ))}
+          </Card>
         </>
       )}
+
+      <View style={{ height: Spacing.xxxl }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.lg, paddingBottom: Spacing.xxxl },
-  greetingSection: {
+  content: { padding: Spacing.lg, gap: Spacing.lg },
+
+  hero: {
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    overflow: 'hidden',
+  },
+  heroTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: '800',
+    color: Colors.text,
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
+    lineHeight: 20,
+  },
+  heroId: { fontWeight: '700', color: Colors.text },
+  heroActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
   },
-  greeting: { fontSize: FontSize.sm, color: Colors.textSecondary },
-  userName: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text },
-  roleBadge: {
-    marginTop: Spacing.sm,
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.primary + '18',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-  },
-  roleText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.primary },
-  avatarWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primaryLight + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clockCard: { marginBottom: Spacing.lg },
+
+  clockCard: {},
   clockRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -261,7 +434,7 @@ const styles = StyleSheet.create({
   },
   clockLabel: {
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.text,
   },
   clockDate: {
@@ -269,10 +442,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  clockTimes: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  clockTimes: { flexDirection: 'row', alignItems: 'center' },
   clockTimeItem: { flex: 1, alignItems: 'center' },
   clockTimeLabel: {
     fontSize: FontSize.xs,
@@ -289,34 +459,42 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: Colors.border,
   },
-  clockBtnWrap: {
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    paddingTop: Spacing.md,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
+
+  statsRow: { flexDirection: 'row', gap: Spacing.md },
+
   sectionTitle: {
     fontSize: FontSize.lg,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.text,
-    marginBottom: Spacing.md,
   },
-  actionsGrid: {
+  sectionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  leaveItem: { marginBottom: Spacing.sm },
+  viewAll: {
+    fontSize: FontSize.sm,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+
+  quickGrid: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+
   leaveRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.lg,
+  },
+  leaveIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   leaveType: {
     fontSize: FontSize.md,
@@ -325,7 +503,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   leaveDates: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
     marginTop: 2,
   },

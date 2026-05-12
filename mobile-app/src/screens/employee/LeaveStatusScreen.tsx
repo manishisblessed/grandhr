@@ -3,19 +3,29 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
+import Button from '../../components/common/Button';
 import { LeaveService } from '../../services/leave.service';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import {
+  Colors,
+  FontSize,
+  Spacing,
+  BorderRadius,
+  Gradients,
+} from '../../constants/theme';
 import { LEAVE_STATUS_COLORS } from '../../constants/config';
 import { formatDate } from '../../utils/formatters';
-import { Leave, LeaveStatus } from '../../types';
+import { Leave, LeaveBalance, LeaveStatus } from '../../types';
 
 const FILTERS: { label: string; value: LeaveStatus | 'ALL' }[] = [
   { label: 'All', value: 'ALL' },
@@ -24,16 +34,32 @@ const FILTERS: { label: string; value: LeaveStatus | 'ALL' }[] = [
   { label: 'Rejected', value: 'REJECTED' },
 ];
 
+const LEAVE_TYPE_LABELS: Record<string, string> = {
+  CASUAL_LEAVE: 'Casual',
+  SICK_LEAVE: 'Sick',
+  EARNED_LEAVE: 'Earned',
+  MATERNITY_LEAVE: 'Maternity',
+  PATERNITY_LEAVE: 'Paternity',
+  COMP_OFF: 'Comp Off',
+  LOP: 'Loss of Pay',
+};
+
 export default function LeaveStatusScreen() {
+  const navigation = useNavigation<any>();
   const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [filter, setFilter] = useState<LeaveStatus | 'ALL'>('ALL');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchLeaves = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     try {
-      const res = await LeaveService.getMyLeaves();
-      setLeaves(Array.isArray(res.data) ? res.data : []);
+      const [leavesRes, balRes] = await Promise.all([
+        LeaveService.getMyLeaves(),
+        LeaveService.getBalance().catch(() => ({ data: [] })),
+      ]);
+      setLeaves(Array.isArray(leavesRes.data) ? leavesRes.data : []);
+      setBalances(Array.isArray(balRes.data) ? (balRes.data as any) : []);
     } catch {
       // silent
     } finally {
@@ -43,135 +69,413 @@ export default function LeaveStatusScreen() {
   }, []);
 
   useEffect(() => {
-    fetchLeaves();
-  }, [fetchLeaves]);
+    fetchAll();
+  }, [fetchAll]);
 
   const filtered =
     filter === 'ALL' ? leaves : leaves.filter((l) => l.status === filter);
 
-  if (loading) return <LoadingSpinner message="Loading leaves..." />;
+  const counts = {
+    PENDING: leaves.filter((l) => l.status === 'PENDING').length,
+    APPROVED: leaves.filter((l) => l.status === 'APPROVED').length,
+    REJECTED: leaves.filter((l) => l.status === 'REJECTED').length,
+  };
 
-  const renderItem = ({ item }: { item: Leave }) => (
-    <Card style={styles.item}>
-      <View style={styles.itemHeader}>
-        <Text style={styles.leaveType}>
-          {item.type.replace(/_/g, ' ').split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')}
-        </Text>
-        <Badge
-          label={item.status}
-          color={LEAVE_STATUS_COLORS[item.status]}
-          size="sm"
-        />
-      </View>
-      <View style={styles.dateRow}>
-        <View style={styles.dateBlock}>
-          <Text style={styles.dateLabel}>From</Text>
-          <Text style={styles.dateValue}>{formatDate(item.startDate)}</Text>
-        </View>
-        <View style={styles.dateBlock}>
-          <Text style={styles.dateLabel}>To</Text>
-          <Text style={styles.dateValue}>{formatDate(item.endDate)}</Text>
-        </View>
-        <View style={styles.dateBlock}>
-          <Text style={styles.dateLabel}>Days</Text>
-          <Text style={styles.dateValue}>{item.days}</Text>
-        </View>
-      </View>
-      <Text style={styles.reason} numberOfLines={2}>
-        {item.reason}
-      </Text>
-      {item.rejectedReason && (
-        <Text style={styles.rejectedReason}>
-          Rejection reason: {item.rejectedReason}
-        </Text>
-      )}
-    </Card>
-  );
+  const totalBalance = balances.reduce((s, b) => s + b.balance, 0);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.filterRow}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.value}
-            style={[styles.filterChip, filter === f.value && styles.filterActive]}
-            onPress={() => setFilter(f.value)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                filter === f.value && styles.filterTextActive,
-              ]}
-            >
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            fetchAll();
+          }}
+          tintColor={Colors.primary}
+        />
+      }
+    >
+      {/* Hero balance */}
+      <LinearGradient
+        colors={Gradients.amberOrange}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <View style={styles.heroRow}>
+          <View>
+            <Text style={styles.heroLabel}>YOUR LEAVE BALANCE</Text>
+            <Text style={styles.heroValue}>{totalBalance}</Text>
+            <Text style={styles.heroSub}>days available across all types</Text>
+          </View>
+          <View style={styles.heroIconWrap}>
+            <Ionicons name="airplane" size={28} color="#fff" />
+          </View>
+        </View>
+        <Button
+          title="Apply for leave"
+          variant="gradient"
+          gradient={['#FFFFFF', '#FFFFFF']}
+          icon={<Ionicons name="add" size={18} color={Colors.warning} />}
+          textStyle={{ color: Colors.warning }}
+          onPress={() => navigation.navigate('LeaveApply')}
+          fullWidth
+          style={{ marginTop: Spacing.md }}
+        />
+      </LinearGradient>
+
+      {/* Per-type balance breakdown */}
+      {balances.length > 0 && (
+        <Card>
+          <Text style={styles.cardTitle}>Balance by type</Text>
+          <View style={styles.balanceGrid}>
+            {balances.map((b) => {
+              const used = b.used || 0;
+              const total = b.accrued + (b.carryForward || 0);
+              const pct = total > 0 ? (used / total) * 100 : 0;
+              return (
+                <View key={b.leaveType} style={styles.balanceItem}>
+                  <Text style={styles.balanceType}>
+                    {LEAVE_TYPE_LABELS[b.leaveType] || b.leaveType}
+                  </Text>
+                  <Text style={styles.balanceVal}>
+                    <Text style={styles.balanceBig}>{b.balance}</Text>
+                    <Text style={styles.balanceTotal}> / {total}</Text>
+                  </Text>
+                  <View style={styles.balanceTrack}>
+                    <View
+                      style={[
+                        styles.balanceFill,
+                        {
+                          width: `${pct}%`,
+                          backgroundColor: Colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </Card>
+      )}
+
+      {/* Stats */}
+      <View style={styles.statsRow}>
+        <View style={styles.statTile}>
+          <Text style={[styles.statTileValue, { color: Colors.warning }]}>
+            {counts.PENDING}
+          </Text>
+          <Text style={styles.statTileLabel}>Pending</Text>
+        </View>
+        <View style={styles.statTile}>
+          <Text style={[styles.statTileValue, { color: Colors.success }]}>
+            {counts.APPROVED}
+          </Text>
+          <Text style={styles.statTileLabel}>Approved</Text>
+        </View>
+        <View style={styles.statTile}>
+          <Text style={[styles.statTileValue, { color: Colors.error }]}>
+            {counts.REJECTED}
+          </Text>
+          <Text style={styles.statTileLabel}>Rejected</Text>
+        </View>
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              fetchLeaves();
-            }}
-          />
-        }
-        ListEmptyComponent={
+      {/* Filter tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+      >
+        {FILTERS.map((f) => {
+          const active = filter === f.value;
+          const count =
+            f.value === 'ALL'
+              ? leaves.length
+              : leaves.filter((l) => l.status === f.value).length;
+          return (
+            <TouchableOpacity
+              key={f.value}
+              style={[styles.filterChip, active && styles.filterActive]}
+              onPress={() => setFilter(f.value)}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  active && styles.filterTextActive,
+                ]}
+              >
+                {f.label}
+              </Text>
+              <View
+                style={[
+                  styles.filterBadge,
+                  active && styles.filterBadgeActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterBadgeText,
+                    active && styles.filterBadgeTextActive,
+                  ]}
+                >
+                  {count}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Leaves list */}
+      {loading ? (
+        <View style={{ gap: Spacing.sm }}>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} height={120} radius={BorderRadius.lg} />
+          ))}
+        </View>
+      ) : filtered.length === 0 ? (
+        <Card>
           <EmptyState
             icon="calendar-outline"
-            title="No Leaves Found"
-            message="Your leave applications will appear here"
+            title="No leaves found"
+            message={
+              filter === 'ALL'
+                ? "You haven't applied for any leaves yet"
+                : `No ${filter.toLowerCase()} leaves`
+            }
           />
-        }
-      />
-    </View>
+        </Card>
+      ) : (
+        <View style={{ gap: Spacing.sm }}>
+          {filtered.map((l) => (
+            <Card key={l.id}>
+              <View style={styles.leaveHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.leaveType}>
+                    {LEAVE_TYPE_LABELS[l.type] || l.type}
+                  </Text>
+                  <Text style={styles.leaveDays}>
+                    {l.days} day{l.days > 1 ? 's' : ''}
+                  </Text>
+                </View>
+                <Badge
+                  label={l.status}
+                  color={LEAVE_STATUS_COLORS[l.status]}
+                  size="sm"
+                />
+              </View>
+              <View style={styles.leaveDates}>
+                <View style={styles.leaveDateBlock}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={14}
+                    color={Colors.textTertiary}
+                  />
+                  <Text style={styles.leaveDateText}>
+                    {formatDate(l.startDate)} – {formatDate(l.endDate)}
+                  </Text>
+                </View>
+              </View>
+              {l.reason ? (
+                <View style={styles.reasonBox}>
+                  <Text style={styles.reasonLabel}>Reason</Text>
+                  <Text style={styles.reasonText} numberOfLines={3}>
+                    {l.reason}
+                  </Text>
+                </View>
+              ) : null}
+              {l.rejectedReason ? (
+                <View style={[styles.reasonBox, styles.rejectionBox]}>
+                  <Text
+                    style={[styles.reasonLabel, { color: Colors.error }]}
+                  >
+                    Rejection reason
+                  </Text>
+                  <Text style={[styles.reasonText, { color: Colors.error }]}>
+                    {l.rejectedReason}
+                  </Text>
+                </View>
+              ) : null}
+            </Card>
+          ))}
+        </View>
+      )}
+
+      <View style={{ height: Spacing.xxxl }} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  filterRow: {
-    flexDirection: 'row',
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+  content: { padding: Spacing.lg, gap: Spacing.lg },
+
+  hero: {
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
   },
-  filterChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surfaceVariant,
-  },
-  filterActive: { backgroundColor: Colors.primary },
-  filterText: { fontSize: FontSize.sm, color: Colors.textSecondary },
-  filterTextActive: { color: '#fff', fontWeight: '600' },
-  list: { padding: Spacing.lg },
-  item: { marginBottom: Spacing.md },
-  itemHeader: {
+  heroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  heroLabel: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: FontSize.xs,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  heroValue: {
+    color: '#fff',
+    fontSize: 40,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  heroSub: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
+  heroIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  cardTitle: {
+    fontSize: FontSize.md,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: Spacing.md,
+  },
+  balanceGrid: { gap: Spacing.md },
+  balanceItem: {},
+  balanceType: { fontSize: FontSize.xs, color: Colors.textSecondary },
+  balanceVal: { marginTop: 2, marginBottom: 6 },
+  balanceBig: {
+    fontSize: FontSize.lg,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  balanceTotal: { fontSize: FontSize.sm, color: Colors.textTertiary },
+  balanceTrack: {
+    height: 5,
+    backgroundColor: Colors.borderLight,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  balanceFill: { height: '100%', borderRadius: BorderRadius.full },
+
+  statsRow: { flexDirection: 'row', gap: Spacing.sm },
+  statTile: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    alignItems: 'center',
+  },
+  statTileValue: { fontSize: FontSize.xxl, fontWeight: '800' },
+  statTileLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+
+  filterRow: { gap: Spacing.sm, paddingVertical: 2 },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  filterActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  filterText: {
+    fontSize: FontSize.sm,
+    color: Colors.text,
+    fontWeight: '600',
+  },
+  filterTextActive: { color: '#fff' },
+  filterBadge: {
+    backgroundColor: Colors.borderLight,
+    paddingHorizontal: 6,
+    minWidth: 20,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadgeActive: { backgroundColor: 'rgba(255,255,255,0.25)' },
+  filterBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  filterBadgeTextActive: { color: '#fff' },
+
+  leaveHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  leaveType: { fontSize: FontSize.md, fontWeight: '600', color: Colors.text },
-  dateRow: { flexDirection: 'row', marginBottom: Spacing.sm },
-  dateBlock: { flex: 1 },
-  dateLabel: { fontSize: FontSize.xs, color: Colors.textTertiary },
-  dateValue: { fontSize: FontSize.sm, fontWeight: '500', color: Colors.text },
-  reason: { fontSize: FontSize.sm, color: Colors.textSecondary },
-  rejectedReason: {
+  leaveType: {
+    fontSize: FontSize.md,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  leaveDays: {
     fontSize: FontSize.xs,
-    color: Colors.error,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  leaveDates: {
+    flexDirection: 'row',
+    paddingVertical: Spacing.sm,
+  },
+  leaveDateBlock: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    alignItems: 'center',
+  },
+  leaveDateText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  reasonBox: {
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
     marginTop: Spacing.sm,
-    fontStyle: 'italic',
+  },
+  rejectionBox: { backgroundColor: Colors.errorLight },
+  reasonLabel: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  reasonText: {
+    fontSize: FontSize.sm,
+    color: Colors.text,
+    lineHeight: 19,
   },
 });
