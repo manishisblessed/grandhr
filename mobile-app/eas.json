@@ -30,7 +30,7 @@
       "ios": { "autoIncrement": "buildNumber" },
       "android": {
         "autoIncrement": "versionCode",
-        "buildType": "app-bundle"
+        "buildType": "apk"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.grandhr.in/api",
