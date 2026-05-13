@@ -16,16 +16,20 @@ import Skeleton from '../../components/common/Skeleton';
 import { useAuthStore } from '../../store/useAuthStore';
 import { AuthService } from '../../services/auth.service';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getInitials, formatDate, getRoleLabel } from '../../utils/formatters';
 import { User } from '../../types';
 
 export default function ProfileScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const { user, signOut, setUser } = useAuthStore();
   const [profile, setProfile] = useState<User | null>(user);
   const [loading, setLoading] = useState(false);
@@ -232,6 +236,8 @@ function QuickInfo({
   label: string;
   value: string;
 }) {
+  const Colors = useColors();
+  const qiStyles = useThemedStyles(makeQiStyles);
   return (
     <View style={qiStyles.box}>
       <View style={qiStyles.iconWrap}>
@@ -254,6 +260,8 @@ function Section({
   icon: keyof typeof Ionicons.glyphMap;
   children: React.ReactNode;
 }) {
+  const Colors = useColors();
+  const sectionStyles = useThemedStyles(makeSectionStyles);
   return (
     <Card padding="none" style={{ overflow: 'hidden' }}>
       <View style={sectionStyles.head}>
@@ -276,6 +284,8 @@ function InfoRow({
   label: string;
   value?: string | null;
 }) {
+  const Colors = useColors();
+  const infoStyles = useThemedStyles(makeInfoStyles);
   return (
     <View style={infoStyles.row}>
       <Ionicons name={icon} size={16} color={Colors.textTertiary} />
@@ -287,7 +297,7 @@ function InfoRow({
   );
 }
 
-const qiStyles = StyleSheet.create({
+const makeQiStyles = (Colors: ThemeColors) => StyleSheet.create({
   box: {
     flex: 1,
     backgroundColor: Colors.surface,
@@ -317,7 +327,7 @@ const qiStyles = StyleSheet.create({
   value: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.text },
 });
 
-const sectionStyles = StyleSheet.create({
+const makeSectionStyles = (Colors: ThemeColors) => StyleSheet.create({
   head: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -340,7 +350,7 @@ const sectionStyles = StyleSheet.create({
   body: { padding: Spacing.lg, gap: Spacing.sm },
 });
 
-const infoStyles = StyleSheet.create({
+const makeInfoStyles = (Colors: ThemeColors) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -363,7 +373,7 @@ const infoStyles = StyleSheet.create({
   },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
 

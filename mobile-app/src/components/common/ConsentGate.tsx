@@ -12,7 +12,8 @@ import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 import { CONSENT_KEY } from '../../constants/config';
 import { Flags } from '../../constants/flags';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import LoadingSpinner from './LoadingSpinner';
 
 interface Props {
@@ -27,6 +28,7 @@ interface Props {
  * must be told what personal data is collected BEFORE it is sent.
  */
 export default function ConsentGate({ children }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const [status, setStatus] = useState<'checking' | 'blocked' | 'accepted'>('checking');
 
   useEffect(() => {
@@ -73,10 +75,17 @@ export default function ConsentGate({ children }: Props) {
           following personal data:
         </Text>
 
-        <Bullet text="Identity: your name, email address, and employee ID." />
-        <Bullet text="Workplace: attendance clock-ins, leave requests, pay slips, documents." />
-        <Bullet text="Support: any message you send to your HR team or to GrandHR support." />
-        <Bullet text="Device: a secure session token stored on your device to keep you signed in." />
+        {[
+          'Identity: your name, email address, and employee ID.',
+          'Workplace: attendance clock-ins, leave requests, pay slips, documents.',
+          'Support: any message you send to your HR team or to GrandHR support.',
+          'Device: a secure session token stored on your device to keep you signed in.',
+        ].map((text) => (
+          <View key={text} style={styles.bulletRow}>
+            <View style={styles.dotMarker} />
+            <Text style={styles.bulletText}>{text}</Text>
+          </View>
+        ))}
 
         <Text style={styles.body}>
           We do <Text style={styles.bold}>not</Text> access your location, contacts,
@@ -111,16 +120,7 @@ export default function ConsentGate({ children }: Props) {
   );
 }
 
-function Bullet({ text }: { text: string }) {
-  return (
-    <View style={styles.bulletRow}>
-      <View style={styles.dotMarker} />
-      <Text style={styles.bulletText}>{text}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.xxl, paddingTop: Spacing.xxxl * 1.5, paddingBottom: Spacing.xxxl },
   logoWrap: {

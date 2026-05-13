@@ -2,13 +2,14 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Colors,
   BorderRadius,
   Spacing,
   Shadow,
   Gradients,
   GradientKey,
+  ThemeColors,
 } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface CardProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export default function Card({
   padding = 'lg',
   gradient,
 }: CardProps) {
+  const styles = useThemedStyles(makeStyles);
   const paddingValue = padding === 'none' ? 0 : Spacing[padding];
 
   const baseStyle: StyleProp<ViewStyle> = [
@@ -55,19 +57,20 @@ export default function Card({
   return <View style={baseStyle}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderColor: Colors.border,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
-});
+const makeStyles = (Colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      borderWidth: 1,
+      borderColor: Colors.borderLight,
+    },
+    outline: {
+      backgroundColor: 'transparent',
+      borderColor: Colors.border,
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+      borderWidth: 0,
+    },
+  });

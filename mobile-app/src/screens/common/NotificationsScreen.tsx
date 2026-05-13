@@ -15,12 +15,14 @@ import Skeleton from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { useNotificationStore } from '../../store/useNotificationStore';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getRelativeTime } from '../../utils/formatters';
 import { Haptic } from '../../utils/haptics';
 import { Notification } from '../../types';
@@ -48,6 +50,8 @@ const typeStyleFor = (type: string): TypeStyle => {
 };
 
 export default function NotificationsScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const {
     notifications,
     isLoading,
@@ -275,7 +279,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
 
   hero: {

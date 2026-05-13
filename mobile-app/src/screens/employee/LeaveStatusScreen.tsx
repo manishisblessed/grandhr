@@ -17,12 +17,14 @@ import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
 import { LeaveService } from '../../services/leave.service';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { LEAVE_STATUS_COLORS } from '../../constants/config';
 import { formatDate } from '../../utils/formatters';
 import { Leave, LeaveBalance, LeaveStatus } from '../../types';
@@ -45,6 +47,8 @@ const LEAVE_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function LeaveStatusScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<any>();
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
@@ -312,7 +316,7 @@ export default function LeaveStatusScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
 

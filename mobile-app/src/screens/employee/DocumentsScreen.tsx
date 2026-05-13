@@ -19,13 +19,15 @@ import {
   GeneratedDocument,
 } from '../../services/document.service';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
   GradientKey,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { formatDate } from '../../utils/formatters';
 
 const DOC_META: Record<
@@ -93,6 +95,8 @@ const FILTERS = [
 const PAYROLL_TYPES = ['SALARY_SLIP'];
 
 export default function DocumentsScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const toast = useToast();
   const [documents, setDocuments] = useState<GeneratedDocument[]>([]);
   const [filter, setFilter] = useState<'ALL' | 'LETTER' | 'PAYROLL'>('ALL');
@@ -274,7 +278,7 @@ export default function DocumentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
 

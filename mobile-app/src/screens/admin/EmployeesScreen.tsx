@@ -19,7 +19,9 @@ import Input from '../../components/common/Input';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { EmployeeService } from '../../services/employee.service';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { EMPLOYEE_ROLES } from '../../constants/config';
 import { getInitials } from '../../utils/formatters';
 import { Employee } from '../../types';
@@ -38,6 +40,8 @@ const EMPTY_FORM = {
 };
 
 export default function EmployeesScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -245,7 +249,7 @@ export default function EmployeesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, margin: Spacing.lg, paddingHorizontal: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border, gap: Spacing.sm },
   searchInput: { flex: 1, paddingVertical: Spacing.md, fontSize: FontSize.md, color: Colors.text },

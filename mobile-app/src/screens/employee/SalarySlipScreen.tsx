@@ -11,7 +11,9 @@ import Badge from '../../components/common/Badge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { PayrollService } from '../../services/payroll.service';
-import { Colors, FontSize, Spacing } from '../../constants/theme';
+import { FontSize, Spacing, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { formatCurrency } from '../../utils/formatters';
 import { Payroll } from '../../types';
 
@@ -20,13 +22,16 @@ const MONTHS = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-const STATUS_COLORS: Record<string, string> = {
+const buildStatusColors = (Colors: ThemeColors): Record<string, string> => ({
   DRAFT: Colors.warning,
   PROCESSED: Colors.info,
   PAID: Colors.success,
-};
+});
 
 export default function SalarySlipScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const STATUS_COLORS = buildStatusColors(Colors);
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -125,6 +130,7 @@ function Row({
   value: string;
   color?: string;
 }) {
+  const rowStyles = useThemedStyles(makeRowStyles);
   return (
     <View style={rowStyles.row}>
       <Text style={rowStyles.label}>{label}</Text>
@@ -133,7 +139,7 @@ function Row({
   );
 }
 
-const rowStyles = StyleSheet.create({
+const makeRowStyles = (Colors: ThemeColors) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -143,7 +149,7 @@ const rowStyles = StyleSheet.create({
   value: { fontSize: FontSize.sm, fontWeight: '500', color: Colors.text },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   list: { padding: Spacing.lg },
   item: { marginBottom: Spacing.md },

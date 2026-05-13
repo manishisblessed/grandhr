@@ -19,21 +19,24 @@ import TermsScreen from '../screens/common/TermsScreen';
 import OpenSourceLicensesScreen from '../screens/common/OpenSourceLicensesScreen';
 import AboutScreen from '../screens/common/AboutScreen';
 import DeleteAccountScreen from '../screens/common/DeleteAccountScreen';
-import { Colors, FontSize } from '../constants/theme';
+import { FontSize, ThemeColors } from '../constants/theme';
+import { useColors } from '../theme/ThemeProvider';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 const LeaveStack = createNativeStackNavigator();
 const MoreStack = createNativeStackNavigator();
 
-const screenOptions = {
+const buildScreenOptions = (Colors: ThemeColors) => ({
   headerStyle: { backgroundColor: Colors.surface },
   headerTitleStyle: { fontWeight: '600' as const, fontSize: FontSize.lg },
   headerShadowVisible: false,
   headerTintColor: Colors.text,
-};
+});
 
 function HomeStackNavigator() {
+  const Colors = useColors();
+  const screenOptions = buildScreenOptions(Colors);
   return (
     <HomeStack.Navigator screenOptions={screenOptions}>
       <HomeStack.Screen name="EmployeeDashboard" component={EmployeeDashboardScreen} options={{ title: 'Dashboard' }} />
@@ -51,6 +54,8 @@ function HomeStackNavigator() {
 }
 
 function LeaveStackNavigator() {
+  const Colors = useColors();
+  const screenOptions = buildScreenOptions(Colors);
   return (
     <LeaveStack.Navigator screenOptions={screenOptions}>
       <LeaveStack.Screen name="LeaveStatusMain" component={LeaveStatusScreen} options={{ title: 'My Leaves' }} />
@@ -60,6 +65,8 @@ function LeaveStackNavigator() {
 }
 
 function MoreStackNavigator() {
+  const Colors = useColors();
+  const screenOptions = buildScreenOptions(Colors);
   return (
     <MoreStack.Navigator screenOptions={screenOptions}>
       <MoreStack.Screen name="SettingsMain" component={SettingsScreen} options={{ title: 'Settings' }} />
@@ -77,6 +84,8 @@ function MoreStackNavigator() {
 }
 
 export default function EmployeeTabNavigator() {
+  const Colors = useColors();
+  const screenOptions = buildScreenOptions(Colors);
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({

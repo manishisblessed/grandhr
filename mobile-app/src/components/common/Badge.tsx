@@ -2,13 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
   GradientKey,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 type BadgeVariant = 'soft' | 'solid' | 'outline' | 'gradient';
 
@@ -24,13 +26,16 @@ interface BadgeProps {
 
 export default function Badge({
   label,
-  color = Colors.primary,
+  color,
   size = 'md',
   variant = 'soft',
   gradient = 'brand',
   icon,
   style,
 }: BadgeProps) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const resolvedColor = color ?? Colors.primary;
   const sizeStyle = size === 'sm' ? styles.sm : null;
   const textSizeStyle = size === 'sm' ? styles.smText : null;
 
@@ -56,7 +61,7 @@ export default function Badge({
   if (variant === 'solid') {
     return (
       <View
-        style={[styles.badge, { backgroundColor: color }, sizeStyle, style]}
+        style={[styles.badge, { backgroundColor: resolvedColor }, sizeStyle, style]}
       >
         {icon}
         <Text style={[styles.text, { color: '#fff' }, textSizeStyle]}>
@@ -74,14 +79,14 @@ export default function Badge({
           {
             backgroundColor: 'transparent',
             borderWidth: 1,
-            borderColor: color + '55',
+            borderColor: resolvedColor + '55',
           },
           sizeStyle,
           style,
         ]}
       >
         {icon}
-        <Text style={[styles.text, { color }, textSizeStyle]}>{label}</Text>
+        <Text style={[styles.text, { color: resolvedColor }, textSizeStyle]}>{label}</Text>
       </View>
     );
   }
@@ -90,34 +95,35 @@ export default function Badge({
     <View
       style={[
         styles.badge,
-        { backgroundColor: color + '18' },
+        { backgroundColor: resolvedColor + '18' },
         sizeStyle,
         style,
       ]}
     >
       {icon}
-      <Text style={[styles.text, { color }, textSizeStyle]}>{label}</Text>
+      <Text style={[styles.text, { color: resolvedColor }, textSizeStyle]}>{label}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    alignSelf: 'flex-start',
-  },
-  sm: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-  },
-  text: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-  },
-  smText: { fontSize: FontSize.xs },
-});
+const makeStyles = (_Colors: ThemeColors) =>
+  StyleSheet.create({
+    badge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: BorderRadius.full,
+      alignSelf: 'flex-start',
+    },
+    sm: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+    },
+    text: {
+      fontSize: FontSize.sm,
+      fontWeight: '600',
+    },
+    smText: { fontSize: FontSize.xs },
+  });

@@ -1,7 +1,8 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Linking } from 'react-native';
 import { Flags } from '../../constants/flags';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 /**
  * Offline-friendly privacy summary. The canonical policy lives at the URL
@@ -9,6 +10,7 @@ import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
  * see in the store listing.
  */
 export default function PrivacyPolicyScreen() {
+  const styles = useThemedStyles(makeStyles);
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Privacy Policy</Text>
@@ -81,6 +83,7 @@ export default function PrivacyPolicyScreen() {
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -90,6 +93,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Bullet({ children }: { children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.bulletRow}>
       <View style={styles.dot} />
@@ -98,7 +102,7 @@ function Bullet({ children }: { children: React.ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.xxl },
   title: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text },

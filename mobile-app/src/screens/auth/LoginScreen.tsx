@@ -15,11 +15,13 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Flags } from '../../constants/flags';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 type Props = NativeStackScreenProps<any, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -127,7 +129,7 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     flexGrow: 1,

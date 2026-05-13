@@ -3,13 +3,15 @@ import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Colors,
   BorderRadius,
   FontSize,
   Spacing,
   Gradients,
   GradientKey,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { Haptic } from '../../utils/haptics';
 
 interface QuickActionProps {
@@ -25,12 +27,15 @@ interface QuickActionProps {
 export default function QuickAction({
   title,
   icon,
-  color = Colors.primary,
+  color,
   gradient,
   onPress,
   description,
   variant = 'tile',
 }: QuickActionProps) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const resolvedColor = color ?? Colors.primary;
   const handlePress = () => {
     Haptic.light();
     onPress();
@@ -51,8 +56,8 @@ export default function QuickAction({
       <Ionicons name={icon} size={20} color="#fff" />
     </LinearGradient>
   ) : (
-    <View style={[styles.iconWrap, { backgroundColor: color + '18' }]}>
-      <Ionicons name={icon} size={20} color={color} />
+    <View style={[styles.iconWrap, { backgroundColor: resolvedColor + '18' }]}>
+      <Ionicons name={icon} size={20} color={resolvedColor} />
     </View>
   );
 
@@ -95,7 +100,7 @@ export default function QuickAction({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   tileContainer: {
     flex: 1,
     alignItems: 'center',

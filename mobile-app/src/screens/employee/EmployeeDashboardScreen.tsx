@@ -22,12 +22,14 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { DashboardService } from '../../services/dashboard.service';
 import { AttendanceService } from '../../services/attendance.service';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { LEAVE_STATUS_COLORS } from '../../constants/config';
 import {
   getGreeting,
@@ -38,6 +40,8 @@ import {
 import { DashboardStats, Attendance } from '../../types';
 
 export default function EmployeeDashboardScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<any>();
   const toast = useToast();
   const { user } = useAuthStore();
@@ -394,7 +398,7 @@ export default function EmployeeDashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
 

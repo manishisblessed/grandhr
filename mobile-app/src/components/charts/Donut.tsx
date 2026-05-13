@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
-import { Colors, FontSize, Spacing } from '../../constants/theme';
+import { FontSize, Spacing, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 export interface DonutSegment {
   label: string;
@@ -26,6 +28,8 @@ export default function Donut({
   centerValue,
   showLegend = true,
 }: DonutProps) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
   const radius = (size - thickness) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -107,7 +111,7 @@ export default function Donut({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   wrap: { gap: Spacing.md, alignItems: 'center' },
   center: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   centerValue: {

@@ -19,7 +19,9 @@ import Input from '../../components/common/Input';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import { AutomationService, AutomationJob } from '../../services/automation.service';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { AUTOMATION_TYPES } from '../../constants/config';
 import { formatDateTime } from '../../utils/formatters';
 
@@ -31,6 +33,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AutomationScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [jobs, setJobs] = useState<AutomationJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -182,7 +186,7 @@ export default function AutomationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   list: { padding: Spacing.lg },
   card: { marginBottom: Spacing.md },

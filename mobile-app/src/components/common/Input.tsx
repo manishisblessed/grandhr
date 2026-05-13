@@ -9,7 +9,9 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, BorderRadius, FontSize, Spacing } from '../../constants/theme';
+import { BorderRadius, FontSize, Spacing, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -28,6 +30,8 @@ export default function Input({
   style,
   ...props
 }: InputProps) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [secure, setSecure] = useState(isPassword);
 
   return (
@@ -66,35 +70,36 @@ export default function Input({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { marginBottom: Spacing.lg },
-  label: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceVariant,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  inputError: { borderColor: Colors.error },
-  leftIcon: { marginLeft: Spacing.md },
-  input: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    fontSize: FontSize.md,
-    color: Colors.text,
-  },
-  eyeButton: { paddingHorizontal: Spacing.md },
-  error: {
-    fontSize: FontSize.xs,
-    color: Colors.error,
-    marginTop: Spacing.xs,
-  },
-});
+const makeStyles = (Colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { marginBottom: Spacing.lg },
+    label: {
+      fontSize: FontSize.sm,
+      fontWeight: '600',
+      color: Colors.text,
+      marginBottom: Spacing.xs,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.surfaceVariant,
+      borderRadius: BorderRadius.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
+    },
+    inputError: { borderColor: Colors.error },
+    leftIcon: { marginLeft: Spacing.md },
+    input: {
+      flex: 1,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.md,
+      fontSize: FontSize.md,
+      color: Colors.text,
+    },
+    eyeButton: { paddingHorizontal: Spacing.md },
+    error: {
+      fontSize: FontSize.xs,
+      color: Colors.error,
+      marginTop: Spacing.xs,
+    },
+  });

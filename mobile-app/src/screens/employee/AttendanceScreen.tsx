@@ -16,18 +16,22 @@ import EmptyState from '../../components/common/EmptyState';
 import { useToast } from '../../components/common/Toast';
 import { AttendanceService } from '../../services/attendance.service';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { ATTENDANCE_STATUS_COLORS } from '../../constants/config';
 import { formatDate, formatTime, formatHours } from '../../utils/formatters';
 import { Haptic } from '../../utils/haptics';
 import { Attendance } from '../../types';
 
 export default function AttendanceScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const toast = useToast();
   const [records, setRecords] = useState<Attendance[]>([]);
   const [today, setToday] = useState<Attendance | null>(null);
@@ -348,7 +352,7 @@ export default function AttendanceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
 

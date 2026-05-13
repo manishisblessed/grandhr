@@ -12,9 +12,13 @@ import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../../components/common/Card';
 import { Flags } from '../../constants/flags';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 export default function AboutScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const version = Constants.expoConfig?.version ?? 'dev';
   const name = Constants.expoConfig?.name ?? 'GrandHR';
   const runtime = (Constants.expoConfig?.runtimeVersion as string | undefined) ?? version;
@@ -78,7 +82,7 @@ export default function AboutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.xxl },
   hero: { alignItems: 'center', marginBottom: Spacing.xl },

@@ -23,7 +23,9 @@ import {
   SupportTicket,
   TicketReply,
 } from '../../services/support.service';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import {
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
@@ -35,6 +37,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { ADMIN_ROLES } from '../../constants/config';
 
 export default function SupportScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuthStore();
   const isAdmin = user?.role ? ADMIN_ROLES.includes(user.role) : false;
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -242,7 +246,7 @@ export default function SupportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   list: { padding: Spacing.lg },
   ticketCard: { marginBottom: Spacing.sm },

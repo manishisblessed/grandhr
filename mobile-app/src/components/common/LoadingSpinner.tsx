@@ -2,13 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Colors,
   FontSize,
   Spacing,
   Gradients,
   BorderRadius,
   Shadow,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface LoadingSpinnerProps {
   message?: string;
@@ -26,6 +28,8 @@ export default function LoadingSpinner({
   fullScreen = true,
   size = 56,
 }: LoadingSpinnerProps) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const spin = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
 
@@ -143,7 +147,7 @@ export default function LoadingSpinner({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -180,3 +184,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+

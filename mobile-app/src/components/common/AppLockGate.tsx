@@ -11,7 +11,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { AppLock } from '../../services/appLock';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 /**
  * Renders a full-screen overlay that blurs/hides app content whenever the app
@@ -21,6 +23,8 @@ import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
  * Expected to only be mounted inside the authenticated tree (see AppNavigator).
  */
 export default function AppLockGate() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const signOut = useAuthStore((s) => s.signOut);
   const [locked, setLocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -107,7 +111,7 @@ export default function AppLockGate() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   overlay: {
     position: 'absolute',
     top: 0,

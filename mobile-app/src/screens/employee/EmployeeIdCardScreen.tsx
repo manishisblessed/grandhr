@@ -14,15 +14,19 @@ import QRCode from 'react-native-qrcode-svg';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../../components/common/Toast';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getInitials } from '../../utils/formatters';
 import { Haptic } from '../../utils/haptics';
 
 export default function EmployeeIdCardScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuthStore();
   const toast = useToast();
   const [flipped, setFlipped] = useState(false);
@@ -343,7 +347,7 @@ const backRowStyles = StyleSheet.create({
   },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
   header: {},

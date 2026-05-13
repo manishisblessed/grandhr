@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
-import { Colors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
 
 interface SparklineProps {
   data: number[];
@@ -16,10 +16,12 @@ export default function Sparkline({
   data,
   width = 280,
   height = 60,
-  stroke = '#7C3AED',
+  stroke,
   fill,
   showDots = false,
 }: SparklineProps) {
+  const Colors = useColors();
+  const resolvedStroke = stroke ?? Colors.primary;
   if (!data.length) return <View style={{ width, height }} />;
 
   const max = Math.max(...data);
@@ -44,7 +46,7 @@ export default function Sparkline({
     `L 0 ${height} Z`;
 
   const gradId = `spark-grad-${Math.random().toString(36).slice(2, 8)}`;
-  const fillColor = fill || stroke;
+  const fillColor = fill || resolvedStroke;
 
   return (
     <View style={{ width, height }}>
@@ -58,7 +60,7 @@ export default function Sparkline({
         <Path d={areaPath} fill={`url(#${gradId})`} />
         <Path
           d={linePath}
-          stroke={stroke}
+          stroke={resolvedStroke}
           strokeWidth={2.5}
           fill="none"
           strokeLinecap="round"
@@ -66,7 +68,7 @@ export default function Sparkline({
         />
         {showDots &&
           points.map((p, i) => (
-            <Circle key={i} cx={p.x} cy={p.y} r={3} fill={stroke} />
+            <Circle key={i} cx={p.x} cy={p.y} r={3} fill={resolvedStroke} />
           ))}
       </Svg>
     </View>

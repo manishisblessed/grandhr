@@ -11,9 +11,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChatbotService, ChatMessage } from '../../services/chatbot.service';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 export default function ChatbotScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -144,7 +148,7 @@ export default function ChatbotScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   list: { padding: Spacing.lg, paddingBottom: Spacing.md },
   msgRow: { flexDirection: 'row', marginBottom: Spacing.md, alignItems: 'flex-end' },

@@ -12,13 +12,17 @@ import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { AuthService } from '../../services/auth.service';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 type Props = NativeStackScreenProps<any, 'ForgotPassword'>;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -117,7 +121,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scroll: {
     flexGrow: 1,

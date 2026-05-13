@@ -20,7 +20,9 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { AuthService } from '../../services/auth.service';
 import { WHATSAPP_URL, WHATSAPP_MESSAGE, SUPPORT_EMAIL } from '../../constants/config';
 import { Flags } from '../../constants/flags';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import {
   firstPasswordError,
   isPasswordStrong,
@@ -32,6 +34,8 @@ import { useTheme, AppearanceMode } from '../../theme/ThemeProvider';
 import { Haptic } from '../../utils/haptics';
 
 export default function SettingsScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<any>();
   const toast = useToast();
   const { user, signOut } = useAuthStore();
@@ -310,6 +314,8 @@ function SettingRow({
   label: string;
   value: string;
 }) {
+  const Colors = useColors();
+  const rowStyles = useThemedStyles(makeRowStyles);
   return (
     <View style={rowStyles.row}>
       <View style={rowStyles.left}>
@@ -332,6 +338,8 @@ function NavRow({
   onPress: () => void;
   danger?: boolean;
 }) {
+  const Colors = useColors();
+  const rowStyles = useThemedStyles(makeRowStyles);
   const color = danger ? Colors.error : Colors.textSecondary;
   const labelColor = danger ? Colors.error : Colors.text;
   return (
@@ -345,7 +353,7 @@ function NavRow({
   );
 }
 
-const rowStyles = StyleSheet.create({
+const makeRowStyles = (Colors: ThemeColors) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -357,7 +365,7 @@ const rowStyles = StyleSheet.create({
   value: { fontSize: FontSize.sm, color: Colors.textSecondary },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, paddingBottom: Spacing.xxxl },
   section: { marginTop: Spacing.lg },

@@ -16,7 +16,9 @@ import Card from '../../components/common/Card';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToast } from '../../components/common/Toast';
 import { Flags } from '../../constants/flags';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 const CONFIRM_PHRASE = 'DELETE';
 
@@ -26,6 +28,8 @@ const CONFIRM_PHRASE = 'DELETE';
  * via section 5.1.1(v) of the Review Guidelines.
  */
 export default function DeleteAccountScreen({ navigation }: any) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const deleteAccount = useAuthStore((s) => s.deleteAccount);
   const toast = useToast();
   const [password, setPassword] = useState('');
@@ -138,6 +142,7 @@ export default function DeleteAccountScreen({ navigation }: any) {
 }
 
 function Bullet({ children }: { children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.bulletRow}>
       <View style={styles.dot} />
@@ -146,7 +151,7 @@ function Bullet({ children }: { children: React.ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.xxl },
   iconWrap: {

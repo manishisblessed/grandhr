@@ -10,7 +10,8 @@ import React, {
 import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontSize, Spacing, BorderRadius, Shadow } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, Shadow, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
 
 export type ToastKind = 'success' | 'error' | 'info' | 'warning';
 
@@ -94,9 +95,10 @@ export function ToastProvider({ children }: Props) {
 }
 
 function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
+  const Colors = useColors();
   const opacity = useRef(new Animated.Value(0)).current;
   const translate = useRef(new Animated.Value(-16)).current;
-  const kindMeta = KIND_META[item.kind];
+  const kindMeta = kindMetaFor(Colors)[item.kind];
 
   useEffect(() => {
     Animated.parallel([
@@ -129,15 +131,20 @@ function ToastRow({ item, onDismiss }: { item: ToastItem; onDismiss: () => void 
   );
 }
 
-const KIND_META: Record<
+// Toast bg stays a deep slate in both modes for clear contrast against any
+// surface; only the kind-specific icon colors come from the active palette.
+const TOAST_BG = '#0F172A';
+const kindMetaFor = (
+  Colors: ThemeColors,
+): Record<
   ToastKind,
   { bg: string; icon: keyof typeof Ionicons.glyphMap; iconColor: string }
-> = {
-  success: { bg: '#0F172A', icon: 'checkmark-circle', iconColor: Colors.success },
-  error: { bg: '#0F172A', icon: 'alert-circle', iconColor: Colors.error },
-  info: { bg: '#0F172A', icon: 'information-circle', iconColor: Colors.info },
-  warning: { bg: '#0F172A', icon: 'warning', iconColor: Colors.warning },
-};
+> => ({
+  success: { bg: TOAST_BG, icon: 'checkmark-circle', iconColor: Colors.success },
+  error: { bg: TOAST_BG, icon: 'alert-circle', iconColor: Colors.error },
+  info: { bg: TOAST_BG, icon: 'information-circle', iconColor: Colors.info },
+  warning: { bg: TOAST_BG, icon: 'warning', iconColor: Colors.warning },
+});
 
 const styles = StyleSheet.create({
   stack: {

@@ -10,14 +10,16 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Colors,
   BorderRadius,
   FontSize,
   Spacing,
   Shadow,
   Gradients,
   GradientKey,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { Haptic } from '../../utils/haptics';
 
 type ButtonVariant =
@@ -60,6 +62,8 @@ export default function Button({
   fullWidth,
   haptic,
 }: ButtonProps) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const isDisabled = disabled || loading;
   const isGradient = variant === 'gradient';
 
@@ -149,7 +153,7 @@ export default function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',

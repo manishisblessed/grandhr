@@ -17,12 +17,14 @@ import Button from '../../components/common/Button';
 import { useToast } from '../../components/common/Toast';
 import { LeaveService } from '../../services/leave.service';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { LEAVE_TYPES } from '../../constants/config';
 import { LeaveBalance } from '../../types';
 import { formatDate } from '../../utils/formatters';
@@ -53,6 +55,8 @@ function diffDays(a: string, b: string) {
 }
 
 export default function LeaveApplyScreen({ navigation }: Props) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const toast = useToast();
   const [leaveType, setLeaveType] = useState('CASUAL_LEAVE');
   const [startDate, setStartDate] = useState('');
@@ -319,6 +323,8 @@ function DatePickerModal({
   onClose: () => void;
   onSelect: (iso: string) => void;
 }) {
+  const Colors = useColors();
+  const pickerStyles = useThemedStyles(makePickerStyles);
   const [view, setView] = useState<Date>(() =>
     initialDate ? new Date(initialDate) : new Date(),
   );
@@ -406,7 +412,7 @@ function DatePickerModal({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
 
@@ -536,7 +542,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const pickerStyles = StyleSheet.create({
+const makePickerStyles = (Colors: ThemeColors) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

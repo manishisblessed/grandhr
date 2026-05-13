@@ -17,11 +17,15 @@ import Card from '../../components/common/Card';
 import PasswordStrengthMeter from '../../components/common/PasswordStrengthMeter';
 import { CompanyService } from '../../services/company.service';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { firstPasswordError, isPasswordStrong, PASSWORD_MIN_LENGTH } from '../../utils/password';
 import { Flags } from '../../constants/flags';
 
 export default function CompanyOnboardingScreen({ navigation }: any) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showIndiaTax, setShowIndiaTax] = useState(false);
@@ -373,7 +377,7 @@ export default function CompanyOnboardingScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scroll: { flexGrow: 1, padding: Spacing.xxl },
   title: {

@@ -19,20 +19,23 @@ import DeleteAccountScreen from '../screens/common/DeleteAccountScreen';
 import ProfileScreen from '../screens/employee/ProfileScreen';
 import DocumentsScreen from '../screens/employee/DocumentsScreen';
 import SalarySlipScreen from '../screens/employee/SalarySlipScreen';
-import { Colors, FontSize } from '../constants/theme';
+import { FontSize, ThemeColors } from '../constants/theme';
+import { useColors } from '../theme/ThemeProvider';
 
 const Tab = createBottomTabNavigator();
 const DashStack = createNativeStackNavigator();
 const MoreStack = createNativeStackNavigator();
 
-const screenOptions = {
+const buildScreenOptions = (Colors: ThemeColors) => ({
   headerStyle: { backgroundColor: Colors.surface },
   headerTitleStyle: { fontWeight: '600' as const, fontSize: FontSize.lg },
   headerShadowVisible: false,
   headerTintColor: Colors.text,
-};
+});
 
 function DashStackNavigator() {
+  const Colors = useColors();
+  const screenOptions = buildScreenOptions(Colors);
   return (
     <DashStack.Navigator screenOptions={screenOptions}>
       <DashStack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
@@ -48,6 +51,8 @@ function DashStackNavigator() {
 }
 
 function MoreStackNavigator() {
+  const Colors = useColors();
+  const screenOptions = buildScreenOptions(Colors);
   return (
     <MoreStack.Navigator screenOptions={screenOptions}>
       <MoreStack.Screen name="SettingsMain" component={SettingsScreen} options={{ title: 'Settings' }} />
@@ -65,6 +70,8 @@ function MoreStackNavigator() {
 }
 
 export default function AdminTabNavigator() {
+  const Colors = useColors();
+  const screenOptions = buildScreenOptions(Colors);
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({

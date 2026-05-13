@@ -3,7 +3,7 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, FontSize, Spacing, Shadow } from '../../constants/theme';
+import { FontSize, Spacing, Shadow } from '../../constants/theme';
 
 /**
  * Top-of-screen banner that appears whenever the device drops connectivity

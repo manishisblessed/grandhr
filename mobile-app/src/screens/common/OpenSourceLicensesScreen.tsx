@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View, Linking, TouchableOpacity } from 'react-native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 /**
  * Hand-maintained list of the major open-source libraries we bundle.
@@ -25,6 +26,7 @@ const LIBRARIES: ReadonlyArray<{ name: string; license: string; url: string }> =
 ];
 
 export default function OpenSourceLicensesScreen() {
+  const styles = useThemedStyles(makeStyles);
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Open-source software</Text>
@@ -55,7 +57,7 @@ export default function OpenSourceLicensesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.xxl },
   title: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text, marginBottom: Spacing.sm },

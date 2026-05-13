@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../constants/theme';
+import { FontSize, Spacing, BorderRadius, ThemeColors } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import {
   passwordIssues,
   passwordStrength,
@@ -11,20 +13,24 @@ interface Props {
   value: string;
 }
 
-const levelMeta: Record<
+const buildLevelMeta = (
+  Colors: ThemeColors,
+): Record<
   ReturnType<typeof passwordStrength>,
   { label: string; color: string; fill: number }
-> = {
+> => ({
   empty: { label: '', color: Colors.border, fill: 0 },
   weak: { label: 'Weak', color: Colors.error, fill: 0.33 },
   fair: { label: 'Fair', color: Colors.warning, fill: 0.66 },
   strong: { label: 'Strong', color: Colors.success, fill: 1 },
-};
+});
 
 export default function PasswordStrengthMeter({ value }: Props) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
   if (!value) return null;
   const strength = passwordStrength(value);
-  const meta = levelMeta[strength];
+  const meta = buildLevelMeta(Colors)[strength];
   const issues = passwordIssues(value);
 
   const remaining: string[] = [];
@@ -51,7 +57,7 @@ export default function PasswordStrengthMeter({ value }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   wrap: { marginTop: -Spacing.md, marginBottom: Spacing.md },
   bar: {
     height: 4,

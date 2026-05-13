@@ -19,12 +19,14 @@ import Button from '../../components/common/Button';
 import { useToast } from '../../components/common/Toast';
 import { LeaveService } from '../../services/leave.service';
 import {
-  Colors,
   FontSize,
   Spacing,
   BorderRadius,
   Gradients,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { LEAVE_STATUS_COLORS } from '../../constants/config';
 import { formatDate, getInitials } from '../../utils/formatters';
 import { Haptic } from '../../utils/haptics';
@@ -48,6 +50,9 @@ const LEAVE_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function LeaveManagementScreen() {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const modalStyles = useThemedStyles(makeModalStyles);
   const toast = useToast();
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [allLeaves, setAllLeaves] = useState<Leave[]>([]);
@@ -450,7 +455,7 @@ export default function LeaveManagementScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, gap: Spacing.lg },
 
@@ -604,7 +609,7 @@ const styles = StyleSheet.create({
   actionBtnText: { fontSize: FontSize.sm, fontWeight: '700' },
 });
 
-const modalStyles = StyleSheet.create({
+const makeModalStyles = (Colors: ThemeColors) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

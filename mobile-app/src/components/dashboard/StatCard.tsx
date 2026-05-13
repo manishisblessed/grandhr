@@ -3,14 +3,16 @@ import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Colors,
   BorderRadius,
   FontSize,
   Spacing,
   Shadow,
   Gradients,
   GradientKey,
+  ThemeColors,
 } from '../../constants/theme';
+import { useColors } from '../../theme/ThemeProvider';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface StatCardProps {
   title: string;
@@ -28,13 +30,16 @@ export default function StatCard({
   title,
   value,
   icon,
-  color = Colors.primary,
+  color,
   gradient,
   subtitle,
   progress,
   delta,
   style,
 }: StatCardProps) {
+  const Colors = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const resolvedColor = color ?? Colors.primary;
   const gradientColors = gradient
     ? Array.isArray(gradient)
       ? gradient
@@ -68,8 +73,8 @@ export default function StatCard({
             <Ionicons name={icon} size={20} color="#fff" />
           </LinearGradient>
         ) : (
-          <View style={[styles.iconWrap, { backgroundColor: color + '18' }]}>
-            <Ionicons name={icon} size={20} color={color} />
+          <View style={[styles.iconWrap, { backgroundColor: resolvedColor + '18' }]}>
+            <Ionicons name={icon} size={20} color={resolvedColor} />
           </View>
         )}
       </View>
@@ -83,7 +88,7 @@ export default function StatCard({
                 width: `${Math.max(0, Math.min(100, progress))}%`,
                 backgroundColor: gradientColors
                   ? (gradientColors[0] as string)
-                  : color,
+                  : resolvedColor,
               },
             ]}
           />
@@ -93,7 +98,7 @@ export default function StatCard({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (Colors: ThemeColors) => StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: Colors.surface,
